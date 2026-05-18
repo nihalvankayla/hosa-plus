@@ -1,0 +1,17 @@
+export const SQT1_EVENTS = [
+  { id: 'behavioral-health', name: 'Behavioral Health', category: 'Health Science' },
+  { id: 'biomedical-equipment', name: 'Biomedical Equipment Technician', category: 'Health Science' },
+  { id: 'dental-terminology', name: 'Dental Terminology', category: 'Health Science' },
+  { id: 'health-informatics', name: 'Health Informatics', category: 'Health Science' },
+  { id: 'healthcare-administration', name: 'Healthcare Administration', category: 'Health Science' },
+  { id: 'human-growth-development', name: 'Human Growth & Development', category: 'Health Science' },
+  { id: 'medical-law-ethics', name: 'Medical Law & Ethics', category: 'Health Science' },
+  { id: 'medical-math', name: 'Medical Math', category: 'Health Science' },
+  { id: 'medical-reading', name: 'Medical Reading', category: 'Health Science' },
+  { id: 'medical-spelling', name: 'Medical Spelling', category: 'Health Science' },
+  { id: 'medical-terminology', name: 'Medical Terminology', category: 'Health Science' },
+  { id: 'nutrition', name: 'Nutrition', category: 'Health Science' },
+  { id: 'pathophysiology', name: 'Pathophysiology', category: 'Health Science' },
+  { id: 'pharmacology', name: 'Pharmacology', category: 'Health Science' },
+  { id: 'world-health-disparities', name: 'World Health & Disparities', category: 'Health Science' },
+]
