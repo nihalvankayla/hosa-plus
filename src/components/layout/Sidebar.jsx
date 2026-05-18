@@ -56,7 +56,7 @@ function Sidebar() {
         />
       )}
 
-      <aside
+      <aside style={{ background: 'linear-gradient(175deg, #042d47 0%, #063d5c 100%)', borderRight: '1px solid rgba(255,255,255,0.06)', boxShadow: '2px 0 20px rgba(0,0,0,0.18)' }}
         className={`fixed inset-y-0 left-0 z-40 flex w-[214px] shrink-0 flex-col overflow-y-auto border-r border-[rgba(9,87,134,0.11)] bg-white/90 shadow-[2px_0_16px_rgba(9,87,134,0.06)] backdrop-blur-2xl transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
@@ -140,7 +140,7 @@ function SidebarLink({ link, onNavigate }) {
       className={({ isActive }) =>
         `relative mx-[7px] flex items-center gap-2 rounded-[9px] px-[11px] py-[7px] text-xs transition ${
           isActive
-            ? 'bg-[linear-gradient(135deg,rgba(9,87,134,0.10),rgba(9,87,134,0.05))] font-medium text-[#095786] before:absolute before:left-0 before:top-1/2 before:h-3/5 before:w-[3px] before:-translate-y-1/2 before:rounded-r before:bg-gradient-to-b before:from-[#095786] before:to-[#0d6fa8]'
+            ? 'bg-[linear-gradient(135deg,rgba(9,87,134,0.10),rgba(9,87,134,0.05))] font-medium text-white before:absolute before:left-0 before:top-1/2 before:h-3/5 before:w-[3px] before:-translate-y-1/2 before:rounded-r before:bg-gradient-to-b before:from-[#095786] before:to-[#0d6fa8]'
             : 'font-normal text-[#3a5267] hover:bg-[rgba(9,87,134,0.07)] hover:text-[#095786]'
         }`
       }
@@ -149,7 +149,7 @@ function SidebarLink({ link, onNavigate }) {
         <>
           <span
             className={`w-3.5 shrink-0 text-center font-mono text-[10px] ${
-              isActive ? 'text-[#095786]' : 'text-[#7a93a8]'
+              isActive ? 'text-white' : 'text-[rgba(255,255,255,0.55)]'
             }`}
           >
             {link.icon}
