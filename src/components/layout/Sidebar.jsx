@@ -1,200 +1,153 @@
 import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 
 const sections = [
   {
     title: 'Operations',
-    links: [
-      { label: 'Command Center', path: '/dashboard', icon: 'CC' },
-      { label: 'Analytics', path: '/analytics', icon: 'A' },
-    ],
+    links: [{ label: 'Command Center', path: '/dashboard', icon: '▦' }],
   },
   {
     title: 'SQT',
     badge: 'Testing',
     links: [
-      { label: 'Study Suite', path: '/study', icon: 'SS', badge: '4', badgeColor: 'red' },
-      { label: 'Testing', path: '/testing', icon: 'T' },
+      { label: 'AI Hub', path: '/analytics', icon: '*' },
+      { label: 'Study Suite', path: '/study', icon: '▧', badge: '4', badgeColor: 'r' },
+      { label: 'Testing', path: '/testing', icon: '◇' },
     ],
   },
   {
     title: 'Non-SQT',
     badge: 'Pres.',
     links: [
-      { label: 'Presentation Suite', path: '/study', icon: 'P' },
-      { label: 'Scenario Lab', path: '/testing', icon: 'S' },
-      { label: 'Collaborators', path: '/dashboard', icon: 'C' },
+      { label: 'Presentation Suite', path: '/presentation', icon: '▶' },
+      { label: 'Scenario Lab', path: '/scenarios', icon: '⬥' },
+      { label: 'Collaborators', path: '/collaborators', icon: '▣' },
     ],
   },
 ]
 
-const moreLinks = [
-  { label: 'My Planner', path: '/planner', icon: 'MP' },
-  { label: 'Officers Only', path: '/officers', icon: 'Lock' },
-]
-
 function Sidebar() {
-  const [isOpen, setIsOpen] = useState(false)
-  const [showMore, setShowMore] = useState(false)
+  const location = useLocation()
+  const isMoreRoute = ['/planner', '/officers'].includes(location.pathname)
+  const [showMore, setShowMore] = useState(isMoreRoute)
+  const isMoreOpen = showMore || isMoreRoute
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed left-4 top-4 z-50 rounded-[10px] border border-[rgba(9,87,134,0.16)] bg-white/90 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#095786] shadow-[0_2px_12px_rgba(9,87,134,0.12)] backdrop-blur md:hidden"
-      >
-        Menu
-      </button>
+    <nav id="sidebar">
+      <div className="sb-logo">
+        <div className="sb-mark">
+          <LogoMark />
+        </div>
+        <div className="sb-text">
+          <div className="sb-name" style={{ letterSpacing: '0.1em' }}>
+            HOSA<span style={{ color: 'var(--maroon)', fontWeight: 700 }}>+</span>
+          </div>
+          <div className="sb-sub">Clinical Command Center</div>
+        </div>
+      </div>
 
-      {isOpen && (
-        <button
-          type="button"
-          aria-label="Close navigation"
-          onClick={() => setIsOpen(false)}
-          className="fixed inset-0 z-30 bg-slate-950/20 backdrop-blur-sm md:hidden"
-        />
+      {sections.map((section) => (
+        <SidebarSection key={section.title} section={section} />
+      ))}
+
+      <div className="sb-section">
+        <div className="sb-nav">
+          <button type="button" className="sb-more-toggle" onClick={() => setShowMore(!showMore)}>
+            <span className="sb-more-ico">{isMoreOpen ? '-' : '+'}</span>
+            <span className="ni-lbl">More Tools</span>
+          </button>
+        </div>
+      </div>
+
+      {isMoreOpen && (
+        <div className="sb-more-collapsed-section" style={{ display: 'block' }}>
+          <div className="sb-section">
+            <div className="sb-grp">Chapter</div>
+            <div className="sb-nav">
+              <SidebarLink label="My Planner" path="/planner" icon="⌗" />
+              <SidebarLink label="Officers Only" path="/officers" icon="Lock" />
+            </div>
+          </div>
+        </div>
       )}
 
-      <aside style={{ background: 'linear-gradient(175deg, #042d47 0%, #063d5c 100%)', borderRight: '1px solid rgba(255,255,255,0.06)', boxShadow: '2px 0 20px rgba(0,0,0,0.18)' }}
-        className={`fixed inset-y-0 left-0 z-40 flex w-[214px] shrink-0 flex-col overflow-y-auto border-r border-[rgba(9,87,134,0.11)] bg-white/90 shadow-[2px_0_16px_rgba(9,87,134,0.06)] backdrop-blur-2xl transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <SidebarBrand />
-
-        <div className="py-3">
-          {sections.map((section) => (
-            <SidebarSection key={section.title} section={section} onNavigate={() => setIsOpen(false)} />
-          ))}
-
-          <div className="px-2 pt-3">
-            <button
-              type="button"
-              onClick={() => setShowMore(!showMore)}
-              className="flex w-full items-center gap-2 rounded-[9px] px-3 py-2 text-left text-xs font-medium text-[#3a5267] transition hover:bg-[rgba(9,87,134,0.07)] hover:text-[#095786]"
-            >
-              <span className="w-3 text-center font-mono text-[11px] text-[#7a93a8]">
-                {showMore ? '-' : '+'}
-              </span>
-              More Tools
-            </button>
+      <div className="sb-foot">
+        <div className="sb-av" style={{ position: 'relative' }}>
+          NJ
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: '#22c55e',
+              border: '1.5px solid #042d47',
+              boxShadow: '0 0 6px rgba(34,197,94,0.5)',
+            }}
+          />
+        </div>
+        <div className="sb-foot-text">
+          <div className="sb-un">Nihal J.</div>
+          <div className="sb-ur">Comp. Officer</div>
+          <div className="sb-chips">
+            <span className="sb-chip states-chip">STATES 40D</span>
+            <span className="sb-chip">STREAK 7</span>
           </div>
-
-          {showMore && (
-            <SidebarSection
-              section={{ title: 'Chapter', links: moreLinks }}
-              onNavigate={() => setIsOpen(false)}
-            />
-          )}
         </div>
-
-        <SidebarProfile />
-      </aside>
-    </>
+        <span className="sb-officer-badge">OFFICER</span>
+      </div>
+    </nav>
   )
 }
 
-function SidebarBrand() {
+function SidebarSection({ section }) {
   return (
-    <div className="flex shrink-0 items-center gap-2.5 border-b border-[rgba(9,87,134,0.11)] px-[15px] py-[17px]">
-      <div className="grid size-[34px] place-items-center rounded-[10px] bg-gradient-to-br from-[#095786] to-[#0d6fa8] font-mono text-[11px] font-medium tracking-wide text-white shadow-[0_2px_10px_rgba(9,87,134,0.30)]">
-        H+
-      </div>
-      <div>
-        <div className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-[#0d1a24]">
-          HOSA<span className="font-bold text-[#ae0000]">+</span>
-        </div>
-        <div className="mt-px text-[9px] text-[#7a93a8]">Clinical Command Center</div>
-      </div>
-    </div>
-  )
-}
-
-function SidebarSection({ section, onNavigate }) {
-  return (
-    <section className="pb-1 pt-3">
-      <div className="flex items-center px-[15px] pb-[5px] font-mono text-[8px] font-medium uppercase tracking-[0.22em] text-[#7a93a8]">
-        <span>{section.title}</span>
+    <div className="sb-section">
+      <div className="sb-grp" style={{ display: 'flex', alignItems: 'center' }}>
+        {section.title}
         {section.badge && (
-          <span className="ml-auto rounded bg-[rgba(9,87,134,0.07)] px-1.5 py-0.5 text-[7px] tracking-[0.08em] text-[#095786]">
+          <span className={`sb-grp-badge ${section.title === 'SQT' ? 'sqt' : 'non'}`} style={{ marginLeft: 'auto' }}>
             {section.badge}
           </span>
         )}
       </div>
-
-      <div className="flex flex-col gap-px">
+      <div className="sb-nav">
         {section.links.map((link) => (
-          <SidebarLink key={link.path} link={link} onNavigate={onNavigate} />
+          <SidebarLink key={`${section.title}-${link.label}`} {...link} />
         ))}
       </div>
-    </section>
+    </div>
   )
 }
 
-function SidebarLink({ link, onNavigate }) {
+function SidebarLink({ label, path, icon, badge, badgeColor }) {
   return (
-    <NavLink
-      to={link.path}
-      onClick={onNavigate}
-      className={({ isActive }) =>
-        `relative mx-[7px] flex items-center gap-2 rounded-[9px] px-[11px] py-[7px] text-xs transition ${
-          isActive
-            ? 'bg-[linear-gradient(135deg,rgba(9,87,134,0.10),rgba(9,87,134,0.05))] font-medium text-white before:absolute before:left-0 before:top-1/2 before:h-3/5 before:w-[3px] before:-translate-y-1/2 before:rounded-r before:bg-gradient-to-b before:from-[#095786] before:to-[#0d6fa8]'
-            : 'font-normal text-[#3a5267] hover:bg-[rgba(9,87,134,0.07)] hover:text-[#095786]'
-        }`
-      }
-    >
-      {({ isActive }) => (
-        <>
-          <span
-            className={`w-3.5 shrink-0 text-center font-mono text-[10px] ${
-              isActive ? 'text-white' : 'text-[rgba(255,255,255,0.55)]'
-            }`}
-          >
-            {link.icon}
-          </span>
-          <span className="min-w-0 flex-1 truncate">{link.label}</span>
-          {link.badge && <NavBadge color={link.badgeColor}>{link.badge}</NavBadge>}
-        </>
-      )}
+    <NavLink to={path} className={({ isActive }) => `ni ${isActive ? 'active' : ''}`}>
+      <span className="ni-ico">{icon}</span>
+      <span className="ni-lbl">{label}</span>
+      {badge && <span className={`ni-badge ${badgeColor || ''}`}>{badge}</span>}
     </NavLink>
   )
 }
 
-function NavBadge({ children, color }) {
-  const colorClasses =
-    color === 'red'
-      ? 'border-[rgba(174,0,0,0.14)] bg-[rgba(174,0,0,0.06)] text-[#ae0000]'
-      : 'border-[rgba(9,87,134,0.15)] bg-[rgba(9,87,134,0.07)] text-[#095786]'
-
+function LogoMark() {
   return (
-    <span className={`ml-auto rounded-full border px-1.5 py-0.5 font-mono text-[8px] font-medium ${colorClasses}`}>
-      {children}
-    </span>
-  )
-}
-
-function SidebarProfile() {
-  return (
-    <div className="mt-auto flex shrink-0 items-center gap-2 border-t border-[rgba(9,87,134,0.11)] px-[15px] py-3">
-      <div className="relative grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#095786] to-[#0d6fa8] font-mono text-[9px] font-medium text-white shadow-[0_2px_8px_rgba(9,87,134,0.28)]">
-        NJ
-        <span className="absolute bottom-0 right-0 size-2 rounded-full border border-[#042d47] bg-[#22c55e] shadow-[0_0_6px_rgba(34,197,94,0.5)]" />
-      </div>
-      <div className="min-w-0">
-        <div className="truncate text-[11.5px] font-medium text-[#0d1a24]">Nihal J.</div>
-        <div className="mt-px text-[9px] text-[#7a93a8]">Comp. Officer</div>
-        <div className="mt-1 flex gap-1">
-          <span className="rounded border border-[rgba(9,87,134,0.15)] bg-[rgba(9,87,134,0.07)] px-1.5 py-0.5 font-mono text-[8px] font-medium text-[#095786]">
-            STATES 40D
-          </span>
-          <span className="rounded border border-[rgba(9,87,134,0.15)] bg-[rgba(9,87,134,0.07)] px-1.5 py-0.5 font-mono text-[8px] font-medium text-[#095786]">
-            STREAK 7
-          </span>
-        </div>
-      </div>
-    </div>
+    <svg width="34" height="34" viewBox="0 0 34 34" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
+      <defs>
+        <linearGradient id="lgMkReact" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#095786" />
+          <stop offset="100%" stopColor="#0a6fa8" />
+        </linearGradient>
+      </defs>
+      <rect width="34" height="34" rx="9" fill="url(#lgMkReact)" />
+      <rect x="13.5" y="6.5" width="5.5" height="21" rx="2.5" fill="rgba(255,255,255,0.93)" />
+      <rect x="6.5" y="13.5" width="21" height="5.5" rx="2.5" fill="rgba(255,255,255,0.93)" />
+      <circle cx="27" cy="7" r="5.5" fill="#ae0000" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+      <line x1="24.5" y1="7" x2="29.5" y2="7" stroke="white" strokeWidth="1.6" strokeLinecap="round" />
+      <line x1="27" y1="4.5" x2="27" y2="9.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
   )
 }
 
