@@ -156,3 +156,15 @@ function getNewerProgress(localProgress, remoteProgress) {
   const remoteDate = new Date(remoteProgress.updated_at || remoteProgress.last_seen || 0).getTime()
   return remoteDate > localDate ? remoteProgress : localProgress
 }
+
+export function getStudyUserId() {
+  if (typeof window === 'undefined') return 'local-study-user'
+
+  const existingId = window.localStorage.getItem('hosa-plus-study-user-id')
+  if (existingId) return existingId
+
+  const newId = typeof crypto?.randomUUID === 'function' ? `local-${crypto.randomUUID()}` : `local-${Date.now()}`
+  window.localStorage.setItem('hosa-plus-study-user-id', newId)
+  return newId
+}
+

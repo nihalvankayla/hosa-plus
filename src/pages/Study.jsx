@@ -1,9 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getTopicLabel, loadStudyDeckSummaries } from '../data/studyContent.js'
+import { getTopicLabel, loadStudyDeckSummaries, loadStudyDeck } from '../data/studyContent.js'
+import { getTodaysSession, getStudyUserId } from '../lib/sessionCalculator.js'
 
 function Study() {
   const [decks, setDecks] = useState([])
+  const [activeEventId, setActiveEventId] = useState('')
+  const [featuredSession, setFeaturedSession] = useState(null)
+  const [featuredQuizQuestions, setFeaturedQuizQuestions] = useState([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -13,6 +17,22 @@ function Study() {
       const deckSummaries = await loadStudyDeckSummaries()
       if (isMounted) {
         setDecks(deckSummaries)
+
+        const activeId = window.localStorage.getItem('hosa-plus-active-event-id') || 'medical-terminology'
+        setActiveEventId(activeId)
+
+        const readyDecks = deckSummaries.filter((deck) => deck.ready)
+        const selectedDeck = readyDecks.find((deck) => deck.id === activeId) || readyDecks[0]
+
+        if (selectedDeck) {
+          const { flashcards, quizQuestions } = await loadStudyDeck(selectedDeck.id)
+          const userId = getStudyUserId()
+          const sessionData = await getTodaysSession(userId, selectedDeck.id, flashcards)
+          if (isMounted) {
+            setFeaturedQuizQuestions(quizQuestions)
+            setFeaturedSession(sessionData)
+          }
+        }
         setIsLoading(false)
       }
     }
@@ -24,21 +44,67 @@ function Study() {
     }
   }, [])
 
-  const readyDecks = decks.filter((deck) => deck.ready)
-  const featuredDeck = readyDecks.find((deck) => deck.id === 'medical-terminology') || readyDecks[0]
-  const totalCards = decks.reduce((total, deck) => total + deck.cardCount, 0)
-  const totalQuizzes = decks.reduce((total, deck) => total + deck.quizCount, 0)
-  const readiness = getReadinessScore(featuredDeck)
+  const handleEventChange = async (eventId) => {
+    setIsLoading(true)
+    setActiveEventId(eventId)
+    window.localStorage.setItem('hosa-plus-active-event-id', eventId)
+
+    const { flashcards, quizQuestions } = await loadStudyDeck(eventId)
+    const userId = getStudyUserId()
+    const sessionData = await getTodaysSession(userId, eventId, flashcards)
+
+    setFeaturedQuizQuestions(quizQuestions)
+    setFeaturedSession(sessionData)
+    setIsLoading(false)
+  }
+
+
+  const readyDecks = useMemo(() => decks.filter((deck) => deck.ready), [decks])
+  
+  const featuredDeck = useMemo(() => {
+    return readyDecks.find((deck) => deck.id === activeEventId) || readyDecks[0]
+  }, [readyDecks, activeEventId])
+
+  const totalCards = useMemo(() => decks.reduce((total, deck) => total + deck.cardCount, 0), [decks])
+  const totalQuizzes = useMemo(() => decks.reduce((total, deck) => total + deck.quizCount, 0), [decks])
+
+  const readiness = useMemo(() => {
+    if (!featuredDeck) return 0
+    return getReadinessScore(featuredDeck)
+  }, [featuredDeck])
+
   const primaryTopics = useMemo(() => buildTopicPreview(featuredDeck), [featuredDeck])
+
+  const sessionCardsCount = useMemo(() => {
+    if (!featuredSession) return 0
+    return featuredSession.reviewAgain.length + featuredSession.dueToday.length + featuredSession.newCards.length
+  }, [featuredSession])
 
   return (
     <div id="v-studysuite" className="view active study-command">
       <section className="prep-hero">
         <div>
-          <div className="ph-eye">SQT PREP</div>
-          <h1>{featuredDeck ? featuredDeck.name : 'Study Suite'}</h1>
+          <div className="ph-eye">SQT PREP // TARGET EVENT</div>
+          <div className="event-picker-container">
+            <h1 style={{ margin: 0 }}>{featuredDeck ? featuredDeck.name : 'Study Suite'}</h1>
+            {readyDecks.length > 0 && (
+              <select
+                value={activeEventId}
+                onChange={(e) => handleEventChange(e.target.value)}
+                className="featured-event-select"
+              >
+                {readyDecks.map((deck) => (
+                  <option key={deck.id} value={deck.id}>
+                    Focus: {deck.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
           <p>
-            Today&apos;s training block is built around weak cards, due review, new learning, and a short exit check.
+            {featuredDeck 
+              ? `Today's training block for ${featuredDeck.name} features ${sessionCardsCount} cards, including ${featuredSession?.reviewAgain.length || 0} weak cards and ${featuredSession?.newCards.length || 0} new terms.`
+              : "Today's training block is built around weak cards, due review, new learning, and a short exit check."}
           </p>
           <div className="prep-actions">
             <Link className="btn btn-p" to={featuredDeck ? `/study/${featuredDeck.id}` : '/study'}>
@@ -57,8 +123,14 @@ function Study() {
       </section>
 
       <div className="coach-grid">
-        <CoachTile label="Today" value="18 cards" copy="Weak first, due reviews next, then new material." tone="navy" />
+        <CoachTile 
+          label="Today" 
+          value={`${sessionCardsCount} cards`} 
+          copy={featuredSession ? `${featuredSession.reviewAgain.length} weak first, then ${featuredSession.dueToday.length} spaced reviews, plus ${featuredSession.newCards.length} new.` : "Weak first, due reviews next, then new material."} 
+          tone="navy" 
+        />
         <CoachTile label="Weak Focus" value={primaryTopics[0] ? getTopicLabel(primaryTopics[0]) : 'Core Terms'} copy="Start here before free practice." tone="maroon" />
+        <CoachTile label="Exit Check" value={`${featuredQuizQuestions.length || 0} prompts`} copy="Short quiz after study turns recall into test readiness." tone="neutral" />
         <CoachTile label="Library" value={`${readyDecks.length} events`} copy={`${totalCards} cards and ${totalQuizzes} quiz prompts loaded.`} tone="green" />
       </div>
 
@@ -70,29 +142,29 @@ function Study() {
               <span className="ctag">Guided</span>
             </div>
             <div className="session-roadmap">
-              <RoadmapStep label="Warmup" count="3" copy="Easy due cards to wake up recall." />
-              <RoadmapStep label="Weak Drill" count="All" copy="Review Again cards stay first." />
-              <RoadmapStep label="Core Review" count="Due" copy="Spaced repetition cards only." />
-              <RoadmapStep label="New Learning" count="10" copy="Small controlled dose." />
-              <RoadmapStep label="Exit Check" count="3" copy="Quiz questions to confirm transfer." />
+              <RoadmapStep label="Warmup" count={featuredSession ? Math.min(3, featuredSession.dueToday.length) : '3'} copy="Easy due cards to wake up recall." />
+              <RoadmapStep label="Weak Drill" count={featuredSession ? featuredSession.reviewAgain.length : 'All'} copy="Review Again cards stay first." />
+              <RoadmapStep label="Core Review" count={featuredSession ? Math.max(0, featuredSession.dueToday.length - 3) : 'Due'} copy="Spaced repetition cards only." />
+              <RoadmapStep label="New Learning" count={featuredSession ? featuredSession.newCards.length : '10'} copy="Small controlled dose." />
+              <RoadmapStep label="Exit Check" count={featuredQuizQuestions.length > 0 ? Math.min(3, featuredQuizQuestions.length) : '3'} copy="Quiz questions to confirm transfer." />
             </div>
           </section>
 
           <section className="card" style={{ marginTop: 14 }}>
             <div className="card-hd">
               <div className="card-title">Event Library</div>
-              <span className="ctag">{isLoading ? 'Loading' : `${decks.length} SQT events`}</span>
+              <span className="ctag">{isLoading ? 'Loading' : `${readyDecks.length} SQT events`}</span>
             </div>
             <div className="deck-grid prep-deck-grid">
               {decks.map((event) => (
                 <Link className="deck-card prep-deck-card" key={event.id} to={`/study/${event.id}`}>
                   <div className="deck-card-top">
-                    <span className="deck-icon">▧</span>
+                    <span className="deck-icon">?</span>
                     <span className="ctag">{event.ready ? 'Ready' : 'Starter'}</span>
                   </div>
                   <div className="deck-name">{event.name}</div>
                   <div className="deck-meta">
-                    {event.cardCount} cards - {event.topicCount} topics - {event.quizCount} quiz items
+                    {event.cardCount} cards · {event.topicCount} topics · {event.quizCount} quiz items
                   </div>
                   <div className="mini-progress">
                     <span style={{ width: `${getReadinessScore(event)}%` }} />

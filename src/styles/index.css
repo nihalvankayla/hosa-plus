@@ -190,6 +190,20 @@ select {
 .metric-fill.warn { background: var(--amber); }
 .metric-fill.healthy { background: var(--green); }
 
+.study-layout { display: grid; grid-template-columns: 1fr 300px; gap: 20px; width: 100%; }
+
+@media (max-width: 760px) {
+  .study-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 920px) {
+  .study-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .study-stat-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -540,12 +554,7 @@ button.topic-chip:hover {
   line-height: 1.6;
 }
 
-@media (max-width: 760px) {
-  .learning-flow,
-  .study-stat-grid {
-    grid-template-columns: 1fr;
-  }
-}
+
 
 .study-command,
 .event-prep {
@@ -592,6 +601,33 @@ button.topic-chip:hover {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 16px;
+}
+
+.event-picker-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 4px 0 10px;
+}
+
+.featured-event-select {
+  min-height: 34px;
+  border: 1px solid var(--ln2);
+  border-radius: var(--r-sm);
+  background: rgba(255,255,255,.88);
+  box-shadow: var(--glass-shadow);
+  color: var(--navy);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+  padding: 5px 12px;
+}
+
+.featured-event-select:focus {
+  border-color: var(--navy-border);
+  box-shadow: 0 0 0 3px rgba(9,87,134,.08);
 }
 
 .readiness-dial {
@@ -673,15 +709,75 @@ button.topic-chip:hover {
 .coach-tile.navy { border-color: var(--navy-border); background: var(--navy-tint); }
 .coach-tile.green { border-color: rgba(5,150,105,.2); background: rgba(5,150,105,.07); }
 
-.session-roadmap,
-.session-stage-strip {
+/* Session Roadmap — used on the Study command center dashboard */
+.session-roadmap {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
 }
 
-.roadmap-step,
-.session-stage-strip span {
+.session-blueprint {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+  border: 1px solid var(--ln2);
+  border-radius: var(--r-sm);
+  background: rgba(255,255,255,.76);
+  box-shadow: var(--glass-shadow);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.session-blueprint h2 {
+  margin: 3px 0 0;
+  color: var(--t1);
+  font-size: 20px;
+}
+
+.blueprint-steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.blueprint-step {
+  border: 1px solid var(--ln);
+  border-radius: var(--r-sm);
+  background: rgba(250,248,244,.72);
+  padding: 9px;
+}
+
+.blueprint-step span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--navy-tint);
+  border: 1px solid var(--navy-border);
+  color: var(--navy);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.blueprint-step strong {
+  display: block;
+  margin-top: 7px;
+  color: var(--t1);
+  font-size: 11px;
+}
+
+.blueprint-step p {
+  margin-top: 4px;
+  color: var(--t3);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.roadmap-step {
   border: 1px solid var(--ln2);
   border-radius: var(--r-sm);
   background: rgba(255,255,255,.74);
@@ -715,17 +811,43 @@ button.topic-chip:hover {
   line-height: 1.45;
 }
 
+/* Session stage strip — compact linear progress indicator inside FlashcardDeck */
+.session-stage-strip {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 12px 0;
+  border: 1px solid var(--ln2);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--beige);
+}
+
 .session-stage-strip span {
+  flex: 1;
+  padding: 6px 4px;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   text-align: center;
   color: var(--t3);
+  border-right: 1px solid var(--ln2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.15s, color 0.15s;
+}
+
+.session-stage-strip span:last-child {
+  border-right: none;
 }
 
 .session-stage-strip span.active {
-  border-color: var(--navy-border);
-  background: var(--navy-tint);
-  color: var(--navy);
+  background: var(--navy);
+  color: white;
+  font-weight: 600;
 }
 
 .prep-tabs {
@@ -848,6 +970,7 @@ button.topic-chip:hover {
   gap: 10px;
   margin-top: 18px;
   text-align: left;
+  width: 100%;
 }
 
 .info-block {
@@ -858,6 +981,7 @@ button.topic-chip:hover {
   color: var(--t2);
   font-size: 12px;
   line-height: 1.55;
+  min-width: 0;
 }
 
 .info-block ul {
@@ -921,10 +1045,20 @@ button.topic-chip:hover {
 
 @media (max-width: 920px) {
   .prep-hero,
-  .event-coach-panel,
-  .coach-grid,
-  .session-roadmap,
-  .session-stage-strip {
+  .event-coach-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .coach-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .session-roadmap {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .session-blueprint,
+  .blueprint-steps {
     grid-template-columns: 1fr;
   }
 
@@ -936,4 +1070,486 @@ button.topic-chip:hover {
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+/* ═══════════════════════════════════════════════════
+   SPIN ANIMATION
+═══════════════════════════════════════════════════ */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════════════
+   EVENT PAGE — HERO
+═══════════════════════════════════════════════════ */
+.event-prep {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.event-hero {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 20px;
+  align-items: stretch;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.94), rgba(246,251,252,.92)),
+    radial-gradient(circle at 92% 0%, rgba(174,0,0,.09), transparent 38%);
+  border: 1px solid rgba(9,87,134,.13);
+  border-radius: var(--r);
+  box-shadow: var(--glass-shadow);
+  padding: 24px;
+}
+
+.event-hero-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.event-hero-title {
+  font-size: clamp(26px, 4vw, 40px);
+  font-weight: 700;
+  color: var(--t1);
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  margin: 4px 0 8px;
+}
+
+.event-hero-sub {
+  font-size: 13px;
+  color: var(--t2);
+  line-height: 1.65;
+  max-width: 640px;
+  margin: 0 0 16px;
+}
+
+.event-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.event-readiness-dial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: rgba(255,255,255,.76);
+  border: 1px solid rgba(9,87,134,.13);
+  border-radius: var(--r-sm);
+  padding: 16px;
+}
+
+.dial-value {
+  font-family: var(--mono);
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1;
+}
+
+.dial-label {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t1);
+  display: block;
+}
+
+.dial-sub {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--t3);
+}
+
+/* ═══════════════════════════════════════════════════
+   EVENT PAGE — STATS GRID
+═══════════════════════════════════════════════════ */
+.event-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.event-stat-card {
+  border: 1px solid var(--ln2);
+  border-radius: var(--r-sm);
+  background: rgba(255,255,255,.76);
+  box-shadow: var(--glass-shadow);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tone-bg-maroon { border-color: var(--maroon-border); background: var(--maroon-tint); }
+.tone-bg-navy   { border-color: var(--navy-border);   background: var(--navy-tint);   }
+.tone-bg-green  { border-color: rgba(5,150,105,.18);  background: rgba(5,150,105,.07); }
+
+.event-stat-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+
+.event-stat-value {
+  font-family: var(--mono);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--t1);
+  margin-top: 4px;
+}
+
+.event-stat-value.small {
+  font-size: 15px;
+  line-height: 1.3;
+  font-family: var(--font);
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.event-stat-sub {
+  font-size: 11px;
+  color: var(--t3);
+  margin-top: 4px;
+}
+
+/* ═══════════════════════════════════════════════════
+   EVENT PAGE — TAB BAR
+═══════════════════════════════════════════════════ */
+.event-tab-bar {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 4px;
+  background: rgba(255,255,255,.6);
+  border: 1px solid var(--ln2);
+  border-radius: var(--r-sm);
+}
+
+.event-tab {
+  padding: 7px 16px;
+  border-radius: calc(var(--r-sm) - 2px);
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--t2);
+  cursor: pointer;
+  transition: all 0.14s;
+}
+
+.event-tab:hover {
+  color: var(--navy);
+  background: var(--navy-tint);
+}
+
+.event-tab.active {
+  background: var(--grad-navy);
+  color: white;
+  box-shadow: 0 2px 8px rgba(9,87,134,.22);
+}
+
+.event-tab-content {
+  flex: 1;
+}
+
+/* ═══════════════════════════════════════════════════
+   FLASHCARD DECK — NEW LAYOUT
+═══════════════════════════════════════════════════ */
+.fc-deck-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 18px;
+  align-items: start;
+}
+
+.fc-deck-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.fc-deck-aside {
+  position: sticky;
+  top: 0;
+}
+
+.fc-prog-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.fc-prog-track {
+  flex: 1;
+  height: 5px;
+  background: var(--beige2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.fc-prog-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--grad-navy);
+  transition: width 0.6s cubic-bezier(.4,0,.2,1);
+}
+
+.fc-prog-lbl {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--t3);
+  white-space: nowrap;
+}
+
+.fc-mode-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
+}
+
+.fc-mode-tab {
+  padding: 6px 14px;
+  border-radius: 99px;
+  border: 1px solid var(--ln2);
+  background: rgba(255,255,255,.76);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--t2);
+  cursor: pointer;
+  transition: all 0.14s;
+}
+
+.fc-mode-tab:hover { color: var(--navy); border-color: var(--navy-border); }
+
+.fc-mode-tab.active {
+  background: var(--grad-navy);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(9,87,134,.2);
+}
+
+.fc-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.fc-card {
+  min-height: 320px;
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  text-align: center;
+  border: 1px solid var(--ln2);
+  border-radius: var(--r);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(9,87,134,0.08), transparent 32%),
+    linear-gradient(155deg, rgba(255,255,255,0.94), rgba(250,248,244,0.88));
+  box-shadow: var(--glass-shadow);
+  padding: 32px;
+  cursor: pointer;
+  color: var(--t1);
+  transition: box-shadow 0.2s;
+  overflow: visible;
+}
+
+.fc-card:hover { box-shadow: var(--glass-hover); }
+.fc-card.static {
+  min-height: 220px;
+  cursor: default;
+  align-items: center;
+  overflow: hidden;
+}
+
+.fc-face {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fc-face-back {
+  align-items: stretch;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.fc-chips {
+  display: flex;
+  gap: 7px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.fc-face-back .fc-chips { justify-content: flex-start; }
+
+.fc-hint-text {
+  font-size: 12px;
+  color: var(--t3);
+  max-width: 480px;
+  line-height: 1.6;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+.fc-aside-card {
+  background: rgba(9,87,134,.05);
+  border: 1px solid var(--navy-border);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.fc-aside-card strong {
+  display: block;
+  font-size: 13px;
+  color: var(--t1);
+  margin-bottom: 3px;
+  font-weight: 600;
+}
+
+.fc-aside-card span {
+  font-size: 11px;
+  color: var(--t3);
+  font-family: var(--mono);
+}
+
+.fc-face-back .fc-example {
+  width: min(100%, 760px);
+  margin-top: 14px;
+  box-shadow: none;
+}
+
+.fc-face-back .fc-def.main {
+  max-width: 860px;
+  margin: 10px 0 6px;
+  font-size: clamp(18px, 2vw, 25px);
+  line-height: 1.65;
+}
+
+.fc-wrap > .fc-actions {
+  margin-top: 8px;
+}
+
+.fc-submit-btn {
+  align-self: flex-start;
+  margin-top: 0;
+  min-width: 112px;
+  justify-content: center;
+}
+
+.fc-wrap > .form-label {
+  margin-top: 4px;
+}
+
+.fc-aside-scores { display: flex; flex-direction: column; }
+
+.fc-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ln);
+  font-size: 12px;
+  color: var(--t2);
+}
+
+.fc-score-row:last-child { border-bottom: none; }
+
+.fc-score-row strong {
+  font-family: var(--mono);
+  font-size: 18px;
+}
+
+.fc-aside-stage { margin-bottom: 4px; }
+
+.fc-stage-badge {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: var(--navy-tint);
+  border: 1px solid var(--navy-border);
+  color: var(--navy);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+}
+
+.deck-empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  background: rgba(255,255,255,.7);
+  border: 1px solid var(--ln2);
+  border-radius: var(--r);
+  color: var(--t2);
+}
+
+.session-summary-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 32px;
+}
+
+.topic-header {
+  background: rgba(255,255,255,.76);
+  border: 1px solid var(--ln2);
+  border-radius: var(--r-sm);
+  padding: 16px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.topic-header h2 {
+  font-size: 20px;
+  color: var(--t1);
+  margin: 2px 0 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE OVERRIDES
+═══════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .event-hero       { grid-template-columns: 1fr; }
+  .event-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .fc-deck-layout   { grid-template-columns: 1fr; }
+  .fc-deck-aside    { position: static; }
+}
+
+@media (max-width: 1100px) {
+  .card-learning-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .event-stats-grid { grid-template-columns: 1fr 1fr; }
+  .event-tab-bar    { gap: 2px; }
+  .event-tab        { padding: 6px 10px; font-size: 11px; }
 }

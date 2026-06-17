@@ -143,18 +143,54 @@ const EVENT_CONCEPTS = {
 
 export function getGeneratedStudyDeck(eventId) {
   const concepts = EVENT_CONCEPTS[eventId] || []
-  const flashcards = concepts.map(([term, definition, topic], index) => ({
-    id: `${eventId}-core-${index + 1}`,
-    eventId,
-    term,
-    definition,
-    topic,
-    keywords: getKeywords(definition),
-    example: `In ${topic.replaceAll('-', ' ')}, ${term.toLowerCase()} is a high-yield HOSA concept.`,
-    difficulty: index % 5 === 0 ? 'hard' : index % 3 === 0 ? 'medium' : 'easy',
-  }))
+  const flashcards = concepts.flatMap(([term, definition, topic], index) => {
+    const baseDifficulty = index % 5 === 0 ? 'hard' : index % 3 === 0 ? 'medium' : 'easy'
+    const topicLabel = topic.replaceAll('-', ' ')
 
-  const quizQuestions = flashcards.slice(0, 8).map((card, index) => ({
+    return [
+      {
+        id: `${eventId}-core-${index + 1}`,
+        eventId,
+        term,
+        definition,
+        topic,
+        keywords: getKeywords(definition),
+        example: `In ${topicLabel}, ${term.toLowerCase()} is a high-yield HOSA concept.`,
+        difficulty: baseDifficulty,
+        memoryHint: `First recall the plain-language meaning, then connect it to ${topicLabel}.`,
+        competitionNote: 'Definition card: know the exact meaning before moving to application.',
+        breakdown: [`Topic: ${topicLabel}`, 'Task: define it without looking'],
+      },
+      {
+        id: `${eventId}-application-${index + 1}`,
+        eventId,
+        term: `${term}: Application`,
+        definition: `Apply ${term} by recognizing when ${definition.charAt(0).toLowerCase()}${definition.slice(1)}`,
+        topic,
+        keywords: getKeywords(definition),
+        example: `Scenario clue: a HOSA question may describe ${topicLabel} and ask which concept fits.`,
+        difficulty: baseDifficulty === 'easy' ? 'medium' : baseDifficulty,
+        memoryHint: `Ask: what clue in the scenario points to ${term}?`,
+        competitionNote: 'Application card: practice translating scenario wording into the correct concept.',
+        breakdown: ['Spot the clinical or administrative clue', `Match it back to ${term}`],
+      },
+      {
+        id: `${eventId}-trap-${index + 1}`,
+        eventId,
+        term: `${term}: Common Trap`,
+        definition: `Do not confuse ${term} with a nearby concept; use its keywords: ${getKeywords(definition).slice(0, 3).join(', ')}.`,
+        topic,
+        keywords: getKeywords(definition),
+        example: `Timed tests often hide ${term.toLowerCase()} inside similar answer choices.`,
+        difficulty: 'hard',
+        memoryHint: `Say the keywords before picking an answer: ${getKeywords(definition).slice(0, 2).join(' + ')}.`,
+        competitionNote: 'Trap card: this belongs in Weak Drill until you can explain the difference fast.',
+        breakdown: ['Find the tempting wrong answer', 'Use keywords to eliminate it'],
+      },
+    ]
+  })
+
+  const quizQuestions = flashcards.slice(0, 12).map((card, index) => ({
     id: `${card.id}-quiz`,
     question: `What best describes ${card.term}?`,
     options: buildOptions(card, flashcards, index),
