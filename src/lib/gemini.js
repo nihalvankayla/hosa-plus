@@ -6,10 +6,11 @@ const apiKey = import.meta.env.VITE_GEMINI_API_KEY
 const genAI = new GoogleGenerativeAI(apiKey)
 
 /**
- * Sends a message to the Gemini API with context, optional chat history, and system instructions.
- * @param {string} prompt - The user prompt/message.
+ * Sends a message to the Gemini API, including full multi-turn conversation history.
+ * Uses generateContent directly with a contents array to avoid startChat history constraints.
+ * @param {string} prompt - The current user message.
  * @param {string} systemInstruction - Instruction defining model behavior.
- * @param {Array<{role: string, parts: Array<{text: string}>}>} history - Previous messages.
+ * @param {Array<{role: string, content: string}>} history - Previous messages (role: 'user'|'model').
  */
 export async function askGemini(prompt, systemInstruction = '', history = []) {
   try {
@@ -18,24 +19,21 @@ export async function askGemini(prompt, systemInstruction = '', history = []) {
       ...(systemInstruction ? { systemInstruction } : {})
     })
 
-    // If we have history, start a chat session. Otherwise, generate content directly.
-    if (history && history.length > 0) {
-      // Find the first index where the role is 'user' to ensure it starts with a 'user' message
-      const firstUserIndex = history.findIndex(msg => msg.role === 'user')
-      const validHistory = firstUserIndex !== -1 ? history.slice(firstUserIndex) : []
+    // Build the full contents array: prior history + new user message
+    const contents = []
 
-      const chat = model.startChat({
-        history: validHistory.map(msg => ({
-          role: msg.role === 'user' ? 'user' : 'model',
-          parts: [{ text: msg.content }]
-        }))
-      })
-      const result = await chat.sendMessage(prompt)
-      return result.response.text()
-    } else {
-      const result = await model.generateContent(prompt)
-      return result.response.text()
+    for (const msg of history) {
+      // Only include user/model turns; skip any that don't map cleanly
+      const role = msg.role === 'user' ? 'user' : 'model'
+      contents.push({ role, parts: [{ text: msg.content }] })
     }
+
+    // Append the current user prompt
+    contents.push({ role: 'user', parts: [{ text: prompt }] })
+
+    const result = await model.generateContent({ contents })
+    return result.response.text()
+
   } catch (error) {
     console.error('Error in askGemini:', error)
     throw error
