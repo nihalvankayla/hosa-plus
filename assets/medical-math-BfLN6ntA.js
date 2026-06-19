@@ -1,0 +1,1 @@
+var e=[],t=[];export{e as flashcards,t as quizQuestions};
