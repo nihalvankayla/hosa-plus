@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout.jsx'
+import { useAuth } from './contexts/AuthContext.jsx'
 import Analytics from './pages/Analytics.jsx'
+import Auth from './pages/Auth.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import PlannerPage from './pages/PlannerPage.jsx'
 import Study from './pages/Study.jsx'
@@ -8,9 +10,20 @@ import StudyEvent from './pages/StudyEvent.jsx'
 import Testing from './pages/Testing.jsx'
 
 function App() {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-[#f5f2eb] font-mono text-xs uppercase tracking-[0.16em] text-[#095786]">
+        Loading HOSA+
+      </div>
+    )
+  }
+
   return (
     <Routes>
-      <Route element={<AppLayout />}>
+      <Route path="/auth" element={<Auth />} />
+      <Route element={user ? <AppLayout /> : <Navigate to="/auth" replace />}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/study" element={<Study />} />

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext.jsx'
 
 const sections = [
   {
@@ -28,9 +29,17 @@ const sections = [
 
 function Sidebar() {
   const location = useLocation()
+  const { user, signOut } = useAuth()
   const isMoreRoute = ['/planner', '/officers'].includes(location.pathname)
   const [showMore, setShowMore] = useState(isMoreRoute)
   const isMoreOpen = showMore || isMoreRoute
+  const displayName = user?.user_metadata?.full_name || user?.email || 'Student'
+  const initials = displayName
+    .split(/[\s@.]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('')
 
   return (
     <nav id="sidebar">
@@ -73,7 +82,7 @@ function Sidebar() {
 
       <div className="sb-foot">
         <div className="sb-av" style={{ position: 'relative' }}>
-          NJ
+          {initials || 'HP'}
           <div
             style={{
               position: 'absolute',
@@ -89,14 +98,16 @@ function Sidebar() {
           />
         </div>
         <div className="sb-foot-text">
-          <div className="sb-un">Nihal J.</div>
-          <div className="sb-ur">Comp. Officer</div>
+          <div className="sb-un">{displayName}</div>
+          <div className="sb-ur">Student account</div>
           <div className="sb-chips">
             <span className="sb-chip states-chip">STATES 40D</span>
             <span className="sb-chip">STREAK 7</span>
           </div>
         </div>
-        <span className="sb-officer-badge">OFFICER</span>
+        <button type="button" className="sb-officer-badge" onClick={signOut}>
+          SIGN OUT
+        </button>
       </div>
     </nav>
   )
