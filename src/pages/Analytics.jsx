@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { askGemini } from '../lib/gemini.js'
 import { readinessAreas } from '../data/hosaDashboardData.js'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import { saveUserDataToAccount, loadUserDataFromAccount } from '../lib/userDataSync.js'
 
 // Pre-defined initial mock sources
 const INITIAL_SOURCES = [
@@ -52,6 +54,7 @@ const INITIAL_SOURCES = [
 ]
 
 function Analytics() {
+  const { user } = useAuth()
   const [sources, setSources] = useState(INITIAL_SOURCES)
   const [chatHistory, setChatHistory] = useState([
     {
@@ -59,6 +62,38 @@ function Analytics() {
       content: "I've loaded your active sources. You have solid coverage of A&P, Clinical Nursing, and Pharmacology notes. What do you want to work on? I can explain a concept, quiz weak areas, or flag gaps before States."
     }
   ])
+
+  // Load chat history from cache instantly, then fetch from Supabase in the background
+  useEffect(() => {
+    if (user?.id) {
+      // 1. Instant load from localStorage cache
+      const saved = localStorage.getItem(`hosa-plus-aihub-chat:${user.id}`)
+      if (saved) {
+        try {
+          setChatHistory(JSON.parse(saved))
+        } catch (e) {
+          console.error(e)
+        }
+      }
+
+      // 2. Load from Supabase in the background
+      loadUserDataFromAccount(user.id).then(userData => {
+        if (userData?.chatHistory && userData.chatHistory.length > 0) {
+          setChatHistory(userData.chatHistory)
+        }
+      })
+    }
+  }, [user?.id])
+
+  // Save chat history to localStorage and Supabase
+  useEffect(() => {
+    if (user?.id && chatHistory.length > 0) {
+      // Still write to localStorage instantly
+      localStorage.setItem(`hosa-plus-aihub-chat:${user.id}`, JSON.stringify(chatHistory))
+      // Save to Supabase account in background
+      saveUserDataToAccount(user.id, chatHistory, undefined)
+    }
+  }, [chatHistory, user?.id])
   const [inputVal, setInputVal] = useState('')
   const [mode, setMode] = useState('explain')
   const [loading, setLoading] = useState(false)

@@ -20,16 +20,53 @@ export const cardModules = {
 }
 
 export async function loadStudyDeck(eventId) {
-  const loadCards = cardModules[eventId]
-  if (!loadCards) return getGeneratedStudyDeck(eventId)
+  let customCards = []
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(`hosa-plus-custom-flashcards:${eventId}`)
+    if (saved) {
+      try {
+        customCards = JSON.parse(saved)
+      } catch (e) {
+        console.error('Failed to parse custom flashcards:', e)
+      }
+    }
+  }
 
-  const cardData = await loadCards()
-  const generatedDeck = getGeneratedStudyDeck(eventId)
-  const flashcards = cardData.flashcards?.length ? cardData.flashcards : generatedDeck.flashcards
-  const quizQuestions = cardData.quizQuestions?.length ? cardData.quizQuestions : generatedDeck.quizQuestions
+  const normalizedCards = normalizeCards(customCards, eventId)
+
+  // Generate quiz questions dynamically from these custom cards
+  const quizQuestions = normalizedCards.map((card) => {
+    const answer = card.definition
+    
+    // Distractors from other custom cards
+    const otherDefs = normalizedCards
+      .filter(c => c.id !== card.id)
+      .map(c => c.definition)
+    
+    // Shuffle distractors
+    const shuffledDistractors = otherDefs.sort(() => 0.5 - Math.random()).slice(0, 3)
+    
+    // Fallback generic distractors if not enough cards
+    while (shuffledDistractors.length < 3) {
+      shuffledDistractors.push(`Alternative clinical interpretation definition ${shuffledDistractors.length + 1}`)
+    }
+
+    const choices = [answer, ...shuffledDistractors]
+    const shuffledChoices = choices.sort(() => 0.5 - Math.random())
+    const answerIndex = shuffledChoices.indexOf(answer)
+
+    return {
+      id: `quiz-${card.id}`,
+      question: `What is the clinical definition of: "${card.term}"?`,
+      options: shuffledChoices,
+      answerIndex,
+      explanation: `The definition for "${card.term}" is: "${card.definition}".`,
+      relatedCardId: card.id
+    }
+  })
 
   return {
-    flashcards: normalizeCards(flashcards, eventId),
+    flashcards: normalizedCards,
     quizQuestions,
   }
 }

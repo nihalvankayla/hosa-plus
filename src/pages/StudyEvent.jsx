@@ -1,11 +1,13 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import FlashcardDeck from '../components/study/FlashcardDeck.jsx'
 import { SQT1_EVENTS } from '../data/events.js'
 import { getTopicLabel, getTopicSummaries, loadStudyDeck } from '../data/studyContent.js'
 import { getTodaysSession, saveCardRating, getStudyUserId } from '../lib/sessionCalculator.js'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import { saveUserDataToAccount, loadUserDataFromAccount } from '../lib/userDataSync.js'
 
-const TABS = ['Smart Study', 'Weak Drill', 'Topic Practice', 'Cram Mode', 'Quiz', 'Progress']
+const TABS = ['Smart Study', 'Weak Drill', 'Topic Practice', 'Cram Mode', 'Quiz', 'Progress', 'Manage Cards']
 
 export default function StudyEvent() {
   const { eventId } = useParams()
@@ -38,6 +40,22 @@ export default function StudyEvent() {
   const weakestTopic = progressRows[0]
   const readiness    = getReadiness(progressRows, sessionCards.length)
 
+  const reloadDeck = async () => {
+    const { flashcards, quizQuestions: qs } = await loadStudyDeck(eventId)
+    const todaysSession = await getTodaysSession(userId, eventId, flashcards)
+    setCards(flashcards)
+    setQuizQuestions(qs)
+    setSession(todaysSession)
+    const summaries = getTopicSummaries(flashcards)
+    if (summaries.length > 0) {
+      if (!selectedTopic || !summaries.some(s => s.topic === selectedTopic)) {
+        setSelectedTopic(summaries[0].topic)
+      }
+    } else {
+      setSelectedTopic('')
+    }
+  }
+
   useEffect(() => {
     let alive = true
     async function load() {
@@ -57,6 +75,18 @@ export default function StudyEvent() {
     load()
     return () => { alive = false }
   }, [eventId, userId])
+
+  // Sync profile data from Supabase in the background when user logs in/changes
+  const { user } = useAuth()
+  useEffect(() => {
+    if (user?.id) {
+      loadUserDataFromAccount(user.id).then(userData => {
+        if (userData?.customFlashcards) {
+          reloadDeck()
+        }
+      })
+    }
+  }, [user?.id, eventId])
 
   if (isLoading) return <LoadingSpinner />
 
@@ -220,6 +250,14 @@ export default function StudyEvent() {
             sessionCards={sessionCards}
             progressRows={progressRows}
             weakestTopic={weakestTopic}
+          />
+        )}
+
+        {activeTab === 'Manage Cards' && (
+          <ManageCardsPanel
+            eventId={eventId}
+            cards={cards}
+            onReload={reloadDeck}
           />
         )}
       </div>
@@ -507,4 +545,215 @@ function getReadinessLabel(score) {
   if (score >= 80) return 'Competition Ready'
   if (score >= 60) return 'Improving'
   return 'Needs Work'
+}
+
+function ManageCardsPanel({ eventId, cards, onReload }) {
+  const { user } = useAuth()
+  const [term, setTerm] = useState('')
+  const [definition, setDefinition] = useState('')
+  const [topic, setTopic] = useState('core-terms')
+  const [customTopic, setCustomTopic] = useState('')
+  const [difficulty, setDifficulty] = useState('medium')
+  const [search, setSearch] = useState('')
+
+  const syncAllCardsToAccount = (updatedEventCards) => {
+    if (!user?.id) return
+
+    // Build the full map of eventId -> cards from localStorage
+    const fullMap = {}
+    SQT1_EVENTS.forEach(e => {
+      const saved = localStorage.getItem(`hosa-plus-custom-flashcards:${e.id}`)
+      if (saved) {
+        try {
+          fullMap[e.id] = JSON.parse(saved)
+        } catch (err) {
+          console.error(err)
+        }
+      }
+    })
+
+    // Override with current updates
+    fullMap[eventId] = updatedEventCards
+
+    // Save map to Supabase
+    saveUserDataToAccount(user.id, undefined, fullMap)
+  }
+
+  const handleAdd = (e) => {
+    e.preventDefault()
+    if (!term.trim() || !definition.trim()) return
+
+    const selectedTopic = topic === 'custom' ? (customTopic.trim() || 'core-terms') : topic
+    const cleanTopic = selectedTopic.toLowerCase().replace(/\s+/g, '-')
+
+    const newCard = {
+      id: `custom-card-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      term: term.trim(),
+      definition: definition.trim(),
+      topic: cleanTopic,
+      difficulty,
+      eventId
+    }
+
+    const saved = localStorage.getItem(`hosa-plus-custom-flashcards:${eventId}`)
+    let existing = []
+    if (saved) {
+      try {
+        existing = JSON.parse(saved)
+      } catch (e) {
+        console.error(e)
+      }
+    }
+
+    const updated = [...existing, newCard]
+    localStorage.setItem(`hosa-plus-custom-flashcards:${eventId}`, JSON.stringify(updated))
+    
+    // Sync to Supabase in the background
+    syncAllCardsToAccount(updated)
+
+    onReload()
+
+    // Reset inputs
+    setTerm('')
+    setDefinition('')
+    setCustomTopic('')
+  }
+
+  const handleDelete = (id) => {
+    const updated = cards.filter(c => c.id !== id)
+    localStorage.setItem(`hosa-plus-custom-flashcards:${eventId}`, JSON.stringify(updated))
+    
+    // Sync to Supabase in the background
+    syncAllCardsToAccount(updated)
+
+    onReload()
+  }
+
+  const filteredCards = cards.filter(c => 
+    c.term.toLowerCase().includes(search.toLowerCase()) || 
+    c.definition.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <div className="fc-deck-layout">
+      <div className="card">
+        <div className="card-hd">
+          <div className="card-title">Add Custom Flashcard</div>
+          <span className="ctag green">Create</span>
+        </div>
+        <form onSubmit={handleAdd} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 'bold', marginBottom: 4, color: 'var(--t1)' }}>Term</label>
+            <input
+              type="text"
+              placeholder="e.g. Myocardial Infarction"
+              value={term}
+              onChange={e => setTerm(e.target.value)}
+              required
+              style={{ width: '100%', padding: '8px 12px', border: '1px solid #dde5f5', borderRadius: 6, fontSize: 13, background: 'var(--bg)', color: 'var(--t1)' }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 'bold', marginBottom: 4, color: 'var(--t1)' }}>Definition</label>
+            <textarea
+              placeholder="e.g. Obstruction of blood flow to the heart muscle, causing tissue necrosis..."
+              value={definition}
+              onChange={e => setDefinition(e.target.value)}
+              required
+              rows={3}
+              style={{ width: '100%', padding: '8px 12px', border: '1px solid #dde5f5', borderRadius: 6, fontSize: 13, fontFamily: 'inherit', background: 'var(--bg)', color: 'var(--t1)' }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 'bold', marginBottom: 4, color: 'var(--t1)' }}>Topic</label>
+              <select
+                value={topic}
+                onChange={e => setTopic(e.target.value)}
+                style={{ width: '100%', padding: '8px 12px', border: '1px solid #dde5f5', borderRadius: 6, fontSize: 13, background: 'var(--bg)', color: 'var(--t1)' }}
+              >
+                <option value="core-terms">Core Terms</option>
+                <option value="cardiovascular">Cardiovascular</option>
+                <option value="respiratory">Respiratory</option>
+                <option value="pharmacology">Pharmacology</option>
+                <option value="pathology">Pathology</option>
+                <option value="custom">-- Custom Topic --</option>
+              </select>
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 'bold', marginBottom: 4, color: 'var(--t1)' }}>Difficulty</label>
+              <select
+                value={difficulty}
+                onChange={e => setDifficulty(e.target.value)}
+                style={{ width: '100%', padding: '8px 12px', border: '1px solid #dde5f5', borderRadius: 6, fontSize: 13, background: 'var(--bg)', color: 'var(--t1)' }}
+              >
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+          </div>
+          {topic === 'custom' && (
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 'bold', marginBottom: 4, color: 'var(--t1)' }}>Custom Topic Name</label>
+              <input
+                type="text"
+                placeholder="e.g. Neurology"
+                value={customTopic}
+                onChange={e => setCustomTopic(e.target.value)}
+                required
+                style={{ width: '100%', padding: '8px 12px', border: '1px solid #dde5f5', borderRadius: 6, fontSize: 13, background: 'var(--bg)', color: 'var(--t1)' }}
+              />
+            </div>
+          )}
+          <button type="submit" className="btn btn-p" style={{ marginTop: 6, width: '100%' }}>
+            Add Flashcard
+          </button>
+        </form>
+      </div>
+
+      <aside className="card" style={{ flex: 1, minWidth: 280 }}>
+        <div className="card-hd">
+          <div className="card-title">Existing Flashcards</div>
+          <span className="ctag tone-bg-navy">{cards.length} cards</span>
+        </div>
+        <div style={{ marginTop: 12, marginBottom: 12 }}>
+          <input
+            type="text"
+            placeholder="Search custom cards..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ width: '100%', padding: '6px 10px', border: '1px solid #dde5f5', borderRadius: 6, fontSize: 12, background: 'var(--bg)', color: 'var(--t1)' }}
+          />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 400, overflowY: 'auto', paddingRight: 4 }}>
+          {filteredCards.length === 0 ? (
+            <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--t2)', padding: 20 }}>
+              No custom cards found. Create some on the left!
+            </div>
+          ) : (
+            filteredCards.map(card => (
+              <div key={card.id} style={{ padding: 10, background: 'var(--card-bg-sub, #f8faff)', borderRadius: 6, border: '1px solid #dde5f5', position: 'relative' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <strong style={{ fontSize: 13, color: 'var(--t1)' }}>{card.term}</strong>
+                  <button 
+                    onClick={() => handleDelete(card.id)} 
+                    style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: 14, padding: 0 }}
+                    title="Delete card"
+                  >
+                    &times;
+                  </button>
+                </div>
+                <p style={{ fontSize: 12, color: 'var(--t2)', marginTop: 4, lineBreak: 'anywhere' }}>{card.definition}</p>
+                <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                  <span className="ctag" style={{ fontSize: 9 }}>{getTopicLabel(card.topic)}</span>
+                  <span className={`ctag ${card.difficulty === 'hard' ? 'maroon' : card.difficulty === 'easy' ? 'green' : 'navy'}`} style={{ fontSize: 9 }}>{card.difficulty}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </aside>
+    </div>
+  )
 }

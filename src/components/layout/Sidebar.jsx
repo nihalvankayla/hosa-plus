@@ -105,8 +105,8 @@ function Sidebar() {
             <span className="sb-chip">STREAK 7</span>
           </div>
         </div>
-        <button type="button" className="sb-officer-badge" onClick={signOut}>
-          SIGN OUT
+        <button type="button" className="sb-logout-btn" onClick={signOut}>
+          Log out
         </button>
       </div>
     </nav>
