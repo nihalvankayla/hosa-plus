@@ -100,6 +100,72 @@ select {
   box-shadow: var(--glass-hover);
 }
 
+#v-quiz .event-pills {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+#v-quiz .event-pill,
+#v-quiz .count-opt {
+  min-height: 42px;
+  border: 1.5px solid var(--ln2);
+  border-radius: var(--r-sm);
+  background: rgba(255,255,255,0.76);
+  color: var(--t2);
+  cursor: pointer;
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  box-shadow: 0 1px 3px rgba(9,87,134,0.04);
+  transition: border-color .14s, background .14s, color .14s, box-shadow .14s, transform .14s;
+}
+
+#v-quiz .event-pill:hover,
+#v-quiz .count-opt:hover {
+  border-color: var(--navy-border);
+  background: var(--navy-tint);
+  color: var(--navy);
+  transform: translateY(-1px);
+}
+
+#v-quiz .event-pill.active,
+#v-quiz .count-opt.active {
+  border-color: var(--navy);
+  background: var(--navy-tint);
+  color: var(--navy);
+  box-shadow: 0 2px 8px rgba(9,87,134,0.16);
+}
+
+#v-quiz .event-pill:disabled {
+  cursor: wait;
+  opacity: .62;
+  transform: none;
+}
+
+#v-quiz .count-row,
+#v-quiz .timer-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+#v-quiz .count-opt {
+  min-height: auto;
+  min-width: 58px;
+  text-align: center;
+}
+
+#v-quiz .test-begin-btn:disabled {
+  cursor: not-allowed;
+  opacity: .58;
+  transform: none;
+}
+
 .study-plan-page {
   display: flex;
   flex-direction: column;
