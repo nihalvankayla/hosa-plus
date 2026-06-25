@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard.jsx'
 import PlannerPage from './pages/PlannerPage.jsx'
 import Study from './pages/Study.jsx'
 import StudyEvent from './pages/StudyEvent.jsx'
+import StudyPlan from './pages/StudyPlan.jsx'
 import Testing from './pages/Testing.jsx'
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/study" element={<Study />} />
+        <Route path="/study-plan" element={<StudyPlan />} />
         <Route path="/study/:eventId" element={<StudyEvent />} />
         <Route path="/testing" element={<Testing />} />
         <Route path="/planner" element={<PlannerPage />} />

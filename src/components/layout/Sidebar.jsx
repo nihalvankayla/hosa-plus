@@ -13,6 +13,7 @@ const sections = [
     links: [
       { label: 'AI Hub', path: '/analytics', icon: '*' },
       { label: 'Study Suite', path: '/study', icon: '▧', badge: '4', badgeColor: 'r' },
+      { label: 'Study Plan', path: '/study-plan', icon: <CalendarIcon /> },
       { label: 'Testing', path: '/testing', icon: '◇' },
     ],
   },
@@ -140,6 +141,17 @@ function SidebarLink({ label, path, icon, badge, badgeColor }) {
       <span className="ni-lbl">{label}</span>
       {badge && <span className={`ni-badge ${badgeColor || ''}`}>{badge}</span>}
     </NavLink>
+  )
+}
+
+function CalendarIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" aria-hidden="true" focusable="false">
+      <rect x="2.2" y="3" width="10.6" height="9.4" rx="1.6" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M2.5 5.8h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M5 1.9v2.2M10 1.9v2.2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M5.1 8h1.1M8.8 8h1.1M5.1 10.1h1.1M8.8 10.1h1.1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
   )
 }
 
