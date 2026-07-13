@@ -4,6 +4,7 @@ import { useAuth } from './contexts/AuthContext.jsx'
 import Analytics from './pages/Analytics.jsx'
 import Auth from './pages/Auth.jsx'
 import Dashboard from './pages/Dashboard.jsx'
+import Officers from './pages/Officers.jsx'
 import PlannerPage from './pages/PlannerPage.jsx'
 import Study from './pages/Study.jsx'
 import StudyEvent from './pages/StudyEvent.jsx'
@@ -63,16 +64,7 @@ function App() {
             />
           }
         />
-        <Route
-          path="/officers"
-          element={
-            <DemoPlaceholder
-              eyebrow="Chapter"
-              title="Officers Only"
-              description="Private officer planning, agendas, and chapter readiness controls."
-            />
-          }
-        />
+        <Route path="/officers" element={<Officers />} />
       </Route>
     </Routes>
   )
