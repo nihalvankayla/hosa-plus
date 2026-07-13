@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { readinessAreas } from '../data/hosaDashboardData.js'
 
 const activity = [
@@ -8,6 +9,24 @@ const activity = [
 ]
 
 function Dashboard() {
+  const [query, setQuery] = useState('')
+  const navigate = useNavigate()
+
+  const handleAsk = () => {
+    if (!query.trim()) return
+    navigate(`/analytics?q=${encodeURIComponent(query.trim())}`)
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleAsk()
+    }
+  }
+
+  const handleChipClick = (chipText) => {
+    navigate(`/analytics?q=${encodeURIComponent(chipText)}`)
+  }
+
   return (
     <div id="v-dashboard" className="view active">
       <div className="dash5-cmdbar">
@@ -39,13 +58,16 @@ function Dashboard() {
           <input
             className="ai-cmd-inp"
             placeholder='Ask anything - "first-line treatment for anaphylaxis?" or "quiz me on EMT protocols"'
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
           <span className="ai-cmd-kbd">Ctrl K</span>
-          <button className="ai-ask-btn" type="button">Ask</button>
+          <button className="ai-ask-btn" type="button" onClick={handleAsk}>Ask</button>
         </div>
         <div className="ai-quick-chips">
           {['Explain tachycardia', 'Quiz me: Pharmacology', 'Summarize EMT protocols', 'Prep me for States', "Today's focus", 'Build a study plan'].map((chip) => (
-            <span key={chip} className="ai-qchip">{chip}</span>
+            <span key={chip} className="ai-qchip" onClick={() => handleChipClick(chip)} style={{ cursor: 'pointer' }}>{chip}</span>
           ))}
         </div>
       </div>

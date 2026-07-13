@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { askGemini } from '../lib/gemini.js'
 import { readinessAreas } from '../data/hosaDashboardData.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
@@ -55,6 +56,7 @@ const INITIAL_SOURCES = [
 
 function Analytics() {
   const { user } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [sources, setSources] = useState(INITIAL_SOURCES)
   const [chatHistory, setChatHistory] = useState([
     {
@@ -94,6 +96,67 @@ function Analytics() {
       saveUserDataToAccount(user.id, chatHistory, undefined)
     }
   }, [chatHistory, user?.id])
+
+  // Handle auto-trigger of query parameter on mount/redirect
+  useEffect(() => {
+    const q = searchParams.get('q')
+    if (q) {
+      // Clear query parameter so it doesn't run again on reload
+      setSearchParams({}, { replace: true })
+
+      const runInitialQuery = async () => {
+        setLoading(true)
+
+        // Small delay to ensure loaded chat history has settled
+        await new Promise((resolve) => setTimeout(resolve, 200))
+
+        let currentHistory = []
+        setChatHistory((prev) => {
+          if (prev.length > 0 && prev[prev.length - 1].content === q && prev[prev.length - 1].role === 'user') {
+            return prev
+          }
+          currentHistory = [...prev, { role: 'user', content: q }]
+          return currentHistory
+        })
+
+        try {
+          const sourceContext = getSourcesContext()
+          let systemInstruction = `You are HOSA+ AI, a high-fidelity intelligence assistant built for clinical and medical competitive preparation.
+Your goal is to help the student master their topics based on the active sources they have toggled.
+Current Mode Selected by Student: "${mode}".
+Below is the content of the student's active sources. You MUST ground your responses, quizzes, explanations, and advice in these sources as much as possible.
+
+--- ACTIVE SOURCES CONTEXT ---
+${sourceContext}
+--- END CONTEXT ---
+
+Guidelines:
+- If Mode is "explain": provide clear, clinically robust breakdowns of concepts, highlighting key terms.
+- If Mode is "quiz": act as an examiner. Ask ONE medical or clinical question at a time. Challenge their reasoning, evaluate their answer, and provide positive/constructive feedback.
+- If Mode is "weak": identify potential conceptual weak spots, ask probing diagnostics, and outline critical areas they need to review.
+- If Mode is "summarize": provide condensed, highly readable takeaways with bold points.
+- Always sound professional, supportive, and clinical.`
+
+          const response = await askGemini(q, systemInstruction, currentHistory.slice(0, -1))
+          setChatHistory((prev) => [...prev, { role: 'model', content: response }])
+        } catch (err) {
+          console.error(err)
+          setChatHistory((prev) => [
+            ...prev,
+            {
+              role: 'model',
+              content: "Sorry, I encountered an issue connecting to Gemini. Please check your internet connection or API key."
+            }
+          ])
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      runInitialQuery()
+    }
+  }, [searchParams, setSearchParams])
+
   const [inputVal, setInputVal] = useState('')
   const [mode, setMode] = useState('explain')
   const [loading, setLoading] = useState(false)
