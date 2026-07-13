@@ -1,7 +1,7 @@
 import { supabase } from './supabaseClient.js'
 
-// Save user data (chat history & custom flashcards map) to Supabase
-export async function saveUserDataToAccount(userId, chatHistory, customFlashcards) {
+// Save user data (chat history, custom flashcards, planner tasks) to Supabase
+export async function saveUserDataToAccount(userId, chatHistory, customFlashcards, plannerTasks) {
   if (!userId) return
 
   // Retrieve current profile row first to make sure we don't overwrite other fields (like role)
@@ -25,7 +25,8 @@ export async function saveUserDataToAccount(userId, chatHistory, customFlashcard
   const mergedData = {
     ...currentNameData,
     chatHistory: chatHistory !== undefined ? chatHistory : currentNameData.chatHistory || [],
-    customFlashcards: customFlashcards !== undefined ? customFlashcards : currentNameData.customFlashcards || {}
+    customFlashcards: customFlashcards !== undefined ? customFlashcards : currentNameData.customFlashcards || {},
+    plannerTasks: plannerTasks !== undefined ? plannerTasks : currentNameData.plannerTasks || [],
   }
 
   const payload = {
@@ -43,6 +44,9 @@ export async function saveUserDataToAccount(userId, chatHistory, customFlashcard
       Object.keys(customFlashcards).forEach(eventId => {
         localStorage.setItem(`hosa-plus-custom-flashcards:${eventId}`, JSON.stringify(customFlashcards[eventId]))
       })
+    }
+    if (plannerTasks !== undefined) {
+      localStorage.setItem(`hosa-plus-planner:${userId}`, JSON.stringify(plannerTasks))
     }
   }
 
@@ -88,6 +92,9 @@ export async function loadUserDataFromAccount(userId) {
             Object.keys(parsed.customFlashcards).forEach(eventId => {
               localStorage.setItem(`hosa-plus-custom-flashcards:${eventId}`, JSON.stringify(parsed.customFlashcards[eventId]))
             })
+          }
+          if (parsed.plannerTasks) {
+            localStorage.setItem(`hosa-plus-planner:${userId}`, JSON.stringify(parsed.plannerTasks))
           }
         }
         return parsed
