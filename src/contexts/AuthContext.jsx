@@ -33,14 +33,21 @@ export function AuthProvider({ children }) {
       const user = session.user
       const ensureProfile = async () => {
         try {
+          // Use standard select instead of maybeSingle to avoid any potential schema/library compatibility issues
           const { data, error } = await supabase
             .from('profiles')
             .select('id, name')
             .eq('id', user.id)
-            .maybeSingle()
 
-          if (!data && !error) {
-            // Profile row doesn't exist yet, insert initial state
+          if (error) {
+            console.warn('Error querying profile:', error.message)
+            return
+          }
+
+          const hasProfile = data && data.length > 0
+
+          if (!hasProfile) {
+            console.log('No profile found. Creating profile for:', user.email)
             const initialData = {
               fullName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Student',
               email: user.email,
@@ -49,14 +56,23 @@ export function AuthProvider({ children }) {
               plannerTasks: [],
               lastActive: new Date().toISOString()
             }
-            await supabase.from('profiles').insert({
-              id: user.id,
-              name: JSON.stringify(initialData)
-            })
-          } else if (data) {
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .insert({
+                id: user.id,
+                name: JSON.stringify(initialData)
+              })
+            
+            if (insertError) {
+              console.warn('Error inserting profile:', insertError.message)
+            } else {
+              console.log('Profile created successfully for:', user.email)
+            }
+          } else {
             // Profile row exists, verify if we need to update email or lastActive
+            const profileRow = data[0]
             let parsed = {}
-            try { parsed = JSON.parse(data.name) || {} } catch (e) {}
+            try { parsed = JSON.parse(profileRow.name) || {} } catch (e) {}
 
             const now = new Date().toISOString()
             const lastActiveTime = parsed.lastActive ? new Date(parsed.lastActive) : new Date(0)
@@ -70,10 +86,14 @@ export function AuthProvider({ children }) {
                 fullName: parsed.fullName || user.user_metadata?.full_name || 'Student',
                 lastActive: now
               }
-              await supabase
+              const { error: updateError } = await supabase
                 .from('profiles')
                 .update({ name: JSON.stringify(updatedData) })
                 .eq('id', user.id)
+              
+              if (updateError) {
+                console.warn('Error updating profile active status:', updateError.message)
+              }
             }
           }
         } catch (err) {
