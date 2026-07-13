@@ -2726,3 +2726,55 @@ button.topic-chip:hover {
   .officer-pin-card { padding: 28px 20px 24px; }
   .officer-dir-search { width: 100%; }
 }
+
+/* ── Dashboard Layout Scroll fixes & select menu styles ── */
+#v-dashboard {
+  height: auto !important;
+  min-height: auto !important;
+  overflow: visible !important;
+}
+
+.dash5-mid {
+  height: auto !important;
+  min-height: auto !important;
+  overflow: visible !important;
+}
+
+.dash5-mid .card,
+.card-ai-fused,
+.dash5-radar-card {
+  height: auto !important;
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+.dash5-mid > div {
+  overflow: visible !important;
+  height: auto !important;
+}
+
+.dash5-event-select {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+  border-radius: var(--r-sm);
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font);
+  margin-left: 10px;
+}
+
+.dash5-event-select:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.dash5-event-select option {
+  background: #042d47;
+  color: white;
+  font-weight: 500;
+}

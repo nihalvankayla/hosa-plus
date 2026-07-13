@@ -1,7 +1,7 @@
 import { supabase } from './supabaseClient.js'
 
-// Save user data (chat history, custom flashcards, planner tasks) to Supabase
-export async function saveUserDataToAccount(userId, chatHistory, customFlashcards, plannerTasks) {
+// Save user data (chat history, custom flashcards, planner tasks, selected event, situation report) to Supabase
+export async function saveUserDataToAccount(userId, chatHistory, customFlashcards, plannerTasks, selectedEvent, situationReport) {
   if (!userId) return
 
   // Retrieve current profile row first to make sure we don't overwrite other fields (like role)
@@ -27,6 +27,8 @@ export async function saveUserDataToAccount(userId, chatHistory, customFlashcard
     chatHistory: chatHistory !== undefined ? chatHistory : currentNameData.chatHistory || [],
     customFlashcards: customFlashcards !== undefined ? customFlashcards : currentNameData.customFlashcards || {},
     plannerTasks: plannerTasks !== undefined ? plannerTasks : currentNameData.plannerTasks || [],
+    selectedEvent: selectedEvent !== undefined ? selectedEvent : currentNameData.selectedEvent || '',
+    situationReport: situationReport !== undefined ? situationReport : currentNameData.situationReport || null,
     lastActive: new Date().toISOString()
   }
 
@@ -47,6 +49,12 @@ export async function saveUserDataToAccount(userId, chatHistory, customFlashcard
     }
     if (plannerTasks !== undefined) {
       localStorage.setItem(`hosa-plus-planner:${userId}`, JSON.stringify(plannerTasks))
+    }
+    if (selectedEvent !== undefined) {
+      localStorage.setItem(`hosa-plus-selected-event:${userId}`, selectedEvent)
+    }
+    if (situationReport !== undefined) {
+      localStorage.setItem(`hosa-plus-situation-report:${userId}`, JSON.stringify(situationReport))
     }
   }
 
