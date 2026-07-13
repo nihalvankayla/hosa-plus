@@ -27,12 +27,12 @@ export async function saveUserDataToAccount(userId, chatHistory, customFlashcard
     chatHistory: chatHistory !== undefined ? chatHistory : currentNameData.chatHistory || [],
     customFlashcards: customFlashcards !== undefined ? customFlashcards : currentNameData.customFlashcards || {},
     plannerTasks: plannerTasks !== undefined ? plannerTasks : currentNameData.plannerTasks || [],
+    lastActive: new Date().toISOString()
   }
 
   const payload = {
     id: userId,
-    name: JSON.stringify(mergedData),
-    updated_at: new Date().toISOString()
+    name: JSON.stringify(mergedData)
   }
 
   // Keep local storage updated as a backup/cache

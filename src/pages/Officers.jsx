@@ -111,15 +111,14 @@ function OfficerDashboard({ onLock }) {
   useEffect(() => { localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(notes)) }, [notes])
   useEffect(() => { localStorage.setItem(STORAGE_KEY_EVENTS, JSON.stringify(events)) }, [events])
 
-  // Fetch all members from Supabase auth.users via profiles
+  // Fetch all members from Supabase profiles
   const fetchMembers = useCallback(async () => {
     setLoadingMembers(true)
     try {
-      // Query the profiles table — every sign-up creates a row here via userDataSync
+      // Query the profiles table (contains id and name JSON string)
       const { data: profiles, error: profError } = await supabase
         .from('profiles')
-        .select('id, updated_at, name')
-        .order('updated_at', { ascending: false })
+        .select('id, name')
 
       if (profError) {
         console.error('Error fetching profiles:', profError)
@@ -128,27 +127,27 @@ function OfficerDashboard({ onLock }) {
         return
       }
 
-      // Also fetch auth metadata by listing sessions (if accessible)
-      // Fallback: combine profile data with what we can get
-      const { data: { users: authUsers } = {} } = await supabase.auth.admin?.listUsers?.() || {}
-
       const memberList = (profiles || []).map((profile) => {
         // Try to parse the name field for stored data
         let parsedName = null
         try { parsedName = JSON.parse(profile.name) } catch { /* not JSON */ }
 
-        // Try to find matching auth user for email/metadata
-        const authUser = authUsers?.find((u) => u.id === profile.id)
-
         return {
           id: profile.id,
-          email: authUser?.email || profile.id.slice(0, 8) + '...@user',
-          fullName: authUser?.user_metadata?.full_name || parsedName?.fullName || 'Student',
-          lastActive: profile.updated_at,
+          email: parsedName?.email || 'No email',
+          fullName: parsedName?.fullName || 'Student',
+          lastActive: parsedName?.lastActive || null,
           hasStudyData: !!(parsedName?.chatHistory?.length || parsedName?.customFlashcards),
           chatMessages: parsedName?.chatHistory?.length || 0,
           flashcardSets: parsedName?.customFlashcards ? Object.keys(parsedName.customFlashcards).length : 0,
         }
+      })
+
+      // Sort by last active timestamp in JavaScript (descending)
+      memberList.sort((a, b) => {
+        if (!a.lastActive) return 1
+        if (!b.lastActive) return -1
+        return new Date(b.lastActive) - new Date(a.lastActive)
       })
 
       setMembers(memberList)
