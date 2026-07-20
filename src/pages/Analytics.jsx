@@ -1,58 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { askGemini } from '../lib/gemini.js'
-import { readinessAreas } from '../data/hosaDashboardData.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { saveUserDataToAccount, loadUserDataFromAccount } from '../lib/userDataSync.js'
+import { extractTextFromPDF } from '../lib/pdfExtract.js'
 
 // Pre-defined initial mock sources
-const INITIAL_SOURCES = [
-  {
-    id: 'src-1',
-    title: 'HOSA A&P Study Guide 2026',
-    tag: 'Guide',
-    tagClass: 'guide',
-    meta: '148 pages',
-    active: true,
-    content: 'Focuses on human anatomy and physiology, including the cardiovascular system, respiratory system, nervous system, cardiac cycle, endocrine system, and skeletal structures. Core concepts involve homeostasis, blood flow pathways, neural transmission, and muscle contraction.'
-  },
-  {
-    id: 'src-2',
-    title: 'Clinical Nursing Competencies',
-    tag: 'PDF',
-    tagClass: 'pdf',
-    meta: '62 pages',
-    active: true,
-    content: 'Detailing standard clinical procedures, infection control, IV insertion protocols, medication administration safety (the 6 rights), patient assessment, wound care, and vital signs monitoring. Emphasizes patient safety and sterile techniques.'
-  },
-  {
-    id: 'src-3',
-    title: 'My Pharmacology Notes',
-    tag: 'Notes',
-    tagClass: 'notes',
-    meta: '2,340 words',
-    active: true,
-    content: 'Notes on beta-adrenergic blockers (metoprolol, carvedilol) focusing on heart rate and renin reduction. Includes ACE inhibitors (lisinopril), calcium channel blockers, dosage calculations, and key adverse effects like orthostatic hypotension.'
-  },
-  {
-    id: 'src-4',
-    title: 'Emergency Preparedness Protocols',
-    tag: 'PDF',
-    tagClass: 'pdf',
-    meta: '88 pages',
-    active: false,
-    content: 'Covers mass casualty triage using the START method (Simple Triage and Rapid Treatment), disaster response command structures, chemical exposure protocols, and emergency first aid for trauma and hemorrhage control.'
-  },
-  {
-    id: 'src-5',
-    title: 'Pasted: Cardiac Cycle Notes',
-    tag: 'Pasted',
-    tagClass: 'paste',
-    meta: '890 words',
-    active: true,
-    content: 'Steps of the cardiac cycle: atrial systole, isovolumetric contraction, ventricular ejection, isovolumetric relaxation, and passive ventricular filling. Emphasizes pressure-volume relationships and the origin of heart sounds S1 and S2.'
-  }
-]
+const INITIAL_SOURCES = []
 
 function Analytics() {
   const { user } = useAuth()
@@ -167,12 +121,13 @@ Guidelines:
   // Custom source inputs
   const [showAddSource, setShowAddSource] = useState(false)
   const [newTitle, setNewTitle] = useState('')
-  const [newContent, setNewContent] = useState('')
-  const [newTag, setNewTag] = useState('Notes')
   const [webSearchQuery, setWebSearchQuery] = useState('')
+  const [uploadingPDF, setUploadingPDF] = useState(false)
+  const [selectedFile, setSelectedFile] = useState(null)
 
   const chatEndRef = useRef(null)
   const notepadRef = useRef(null)
+  const fileInputRef = useRef(null)
 
   // Increment session timer
   useEffect(() => {
@@ -307,24 +262,62 @@ Guidelines:
     }
   }
 
-  // Handle manual source submission
-  const handleAddCustomSource = () => {
-    if (!newTitle.trim() || !newContent.trim()) return
-
-    const newSrc = {
-      id: `custom-${Date.now()}`,
-      title: newTitle,
-      tag: newTag,
-      tagClass: newTag.toLowerCase() === 'pdf' ? 'pdf' : newTag.toLowerCase() === 'guide' ? 'guide' : newTag.toLowerCase() === 'pasted' ? 'paste' : 'notes',
-      meta: `${newContent.split(/\s+/).length} words`,
-      active: true,
-      content: newContent
+  // Handle PDF file selection and upload
+  const handlePDFFileSelect = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file || !file.name.toLowerCase().endsWith('.pdf')) {
+      alert('Please select a PDF file')
+      return
     }
 
-    setSources((prev) => [...prev, newSrc])
-    setNewTitle('')
-    setNewContent('')
-    setShowAddSource(false)
+    if (!newTitle.trim()) {
+      alert('Please enter a title for this source')
+      return
+    }
+
+    setUploadingPDF(true)
+    try {
+      // Extract text from PDF
+      const pdfText = await extractTextFromPDF(file)
+      
+      // Summarize the PDF content using Gemini (one-time cost)
+      const summaryPrompt = `Please summarize this medical/clinical document concisely in 2-3 sentences, highlighting the key concepts and main topics covered. Keep it focused on the core learning points.\n\n${pdfText.substring(0, 3000)}`
+      const summary = await askGemini(summaryPrompt, 'You are a medical knowledge summarizer for HOSA+ study materials. Create concise, clinically accurate summaries.')
+
+      // Create source object with summary
+      const newSrc = {
+        id: `pdf-${Date.now()}`,
+        title: newTitle,
+        tag: 'PDF',
+        tagClass: 'pdf',
+        meta: `${file.name}`,
+        active: true,
+        content: summary,
+        fullText: pdfText
+      }
+
+      setSources((prev) => [...prev, newSrc])
+      setNewTitle('')
+      setSelectedFile(null)
+      setShowAddSource(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    } catch (err) {
+      console.error('Error processing PDF:', err)
+      alert('Error processing PDF. Please try again.')
+    } finally {
+      setUploadingPDF(false)
+    }
+  }
+
+  // Handle manual source submission (legacy - kept for compatibility)
+  const handleAddCustomSource = () => {
+    if (!selectedFile) {
+      alert('Please select a PDF file')
+      return
+    }
+    handlePDFFileSelect({ target: { files: [selectedFile] } })
   }
 
   // Studio tool execution (Study Guide, Flashcards, Quiz generation)
@@ -402,29 +395,44 @@ Guidelines:
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   style={{ width: '100%', fontSize: '11px', padding: '6px', border: '1px solid #dde5f5', borderRadius: '4px', marginBottom: '6px' }}
+                  disabled={uploadingPDF}
                 />
-                <textarea
-                  placeholder="Paste context content here..."
-                  value={newContent}
-                  onChange={(e) => setNewContent(e.target.value)}
-                  rows={4}
-                  style={{ width: '100%', fontSize: '11px', padding: '6px', border: '1px solid #dde5f5', borderRadius: '4px', marginBottom: '6px', fontFamily: 'inherit' }}
-                />
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '6px' }}>
-                  <select
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    style={{ fontSize: '11px', padding: '4px', border: '1px solid #dde5f5', borderRadius: '4px', flex: 1 }}
-                  >
-                    <option value="Notes">Notes</option>
-                    <option value="PDF">PDF</option>
-                    <option value="Guide">Guide</option>
-                    <option value="Pasted">Pasted</option>
-                  </select>
+                <div style={{ 
+                  width: '100%', 
+                  padding: '20px', 
+                  border: '2px dashed #dde5f5', 
+                  borderRadius: '4px', 
+                  marginBottom: '6px',
+                  textAlign: 'center',
+                  background: selectedFile ? '#e8f5e9' : '#f8faff',
+                  cursor: uploadingPDF ? 'not-allowed' : 'pointer',
+                  opacity: uploadingPDF ? 0.6 : 1
+                }}
+                onClick={() => !uploadingPDF && fileInputRef.current?.click()}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        setSelectedFile(e.target.files[0])
+                      }
+                    }}
+                    style={{ display: 'none' }}
+                    disabled={uploadingPDF}
+                  />
+                  <div style={{ fontSize: '11px', color: selectedFile ? '#2e7d32' : '#8a9ab8', fontWeight: selectedFile ? 600 : 400 }}>
+                    {uploadingPDF ? '⏳ Processing PDF...' : selectedFile ? `✓ ${selectedFile.name}` : '📄 Click to select PDF or drag & drop'}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                  <button onClick={() => setShowAddSource(false)} style={{ fontSize: '10px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #ccc', cursor: 'pointer' }}>Cancel</button>
-                  <button onClick={handleAddCustomSource} style={{ fontSize: '10px', padding: '4px 8px', borderRadius: '4px', border: 'none', background: 'var(--navy)', color: 'white', cursor: 'pointer' }}>Add</button>
+                  <button onClick={() => {
+                    setShowAddSource(false)
+                    setSelectedFile(null)
+                    if (fileInputRef.current) fileInputRef.current.value = ''
+                  }} style={{ fontSize: '10px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #ccc', cursor: 'pointer' }} disabled={uploadingPDF}>Cancel</button>
+                  <button onClick={handleAddCustomSource} style={{ fontSize: '10px', padding: '4px 8px', borderRadius: '4px', border: 'none', background: 'var(--navy)', color: 'white', cursor: uploadingPDF ? 'not-allowed' : 'pointer', opacity: uploadingPDF ? 0.6 : 1 }} disabled={uploadingPDF || !selectedFile || !newTitle.trim()}>Add</button>
                 </div>
               </div>
             )}
