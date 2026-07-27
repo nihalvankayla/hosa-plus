@@ -54,6 +54,7 @@ export function AuthProvider({ children }) {
               chatHistory: [],
               customFlashcards: {},
               plannerTasks: [],
+              activeEventId: 'medical-terminology',
               lastActive: new Date().toISOString()
             }
             const { error: insertError } = await supabase

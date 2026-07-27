@@ -862,6 +862,95 @@ button.topic-chip:hover {
   margin: 4px 0 10px;
 }
 
+/* Command Center event selection and data-driven dashboard additions */
+.dash5-event-control { display:flex; flex-direction:column; gap:3px; min-width:210px; margin-left:auto; }
+.dash5-event-control label, .dash5-event-control span { font-family:var(--mono); font-size:8px; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.48); }
+.dash5-event-control select { width:100%; border:1px solid rgba(255,255,255,.2); border-radius:var(--r-sm); padding:8px 28px 8px 10px; color:white; background:rgba(255,255,255,.1); font:500 11px var(--font); outline:none; cursor:pointer; }
+.dash5-event-control select:focus { border-color:rgba(255,255,255,.55); box-shadow:0 0 0 3px rgba(255,255,255,.08); }
+.dash5-event-control option { color:var(--t1); background:white; }
+.dash5-event-control span { font-size:8px; letter-spacing:.04em; text-transform:none; }
+.command-wave { display:flex; align-items:center; justify-content:center; width:28px; height:20px; color:var(--teal); font-size:17px; }
+.ai-qchip { border:1px solid var(--glass-border); background:var(--card-bg); color:var(--t2); cursor:pointer; font:10px var(--font); }
+.ai-qchip:hover { color:var(--navy); border-color:var(--navy-border); background:var(--navy-tint); }
+.radar-dashboard-content { display:flex; flex-direction:column; align-items:center; flex:1; min-height:0; }
+.radar-dashboard { position:relative; flex-shrink:0; }
+.radar-dashboard svg { display:block; max-width:100%; height:auto; }
+.radar-dashboard-legend { width:100%; }
+.event-report { display:flex; align-items:flex-start; gap:10px; margin-bottom:12px; color:var(--t2); line-height:1.55; font-size:11px; }
+.event-report strong { color:var(--navy); font-size:12px; }
+.event-report p { margin-top:3px; }
+.event-report-mark { display:grid; place-items:center; flex-shrink:0; width:30px; height:30px; border-radius:8px; color:white; background:var(--grad-navy); font:500 9px var(--mono); }
+.timeline-note { color:rgba(255,255,255,.7); font-size:10px; line-height:1.5; max-width:190px; }
+.timeline-note strong { color:white; }
+.quick-launch-label { font:8px var(--mono); color:var(--t3); }
+.quick-launch-stack { display:flex; flex-direction:column; gap:7px; }
+.snapshot-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.snapshot-grid > div { padding:11px 12px; border-radius:var(--r-sm); background:var(--navy-tint); border:1px solid var(--navy-border); }
+.snapshot-value { color:var(--navy); font:600 21px var(--mono); }
+.snapshot-label { margin-top:3px; color:var(--t3); font:8px var(--mono); letter-spacing:.12em; text-transform:uppercase; }
+
+@media (max-width: 1120px) {
+  .dash5-event-control { order:3; width:100%; margin-left:0; }
+}
+
+@media (max-width: 760px) {
+  .dash5-stats { width:100%; justify-content:space-between; margin-left:0; }
+  .dash5-cmdbar { flex-wrap:wrap; }
+  .dash5-mid { grid-template-columns:1fr; overflow:visible; }
+  .dash5-mid > * { min-height:260px; }
+  .snapshot-grid { grid-template-columns:repeat(2,1fr); }
+}
+
+/* Reference-fit Command Center panels */
+.situation-header { flex-shrink:0; }
+.situation-title-group { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+.situation-divider { width:1px; height:16px; background:var(--ln2); margin:0 2px; }
+.situation-accent { color:var(--teal); }
+.ai-situation-bubble { display:flex; align-items:flex-start; gap:9px; margin-bottom:14px; }
+.ai-situation-copy { flex:1; padding:11px 13px; border:1px solid rgba(10,124,140,.12); border-radius:3px 10px 10px 10px; background:rgba(10,124,140,.035); color:var(--t2); font-size:11.5px; line-height:1.7; }
+.ai-situation-copy strong { color:var(--navy); }
+.ai-situation-copy .situation-warning { color:var(--maroon); }
+.situation-actions { display:flex; gap:5px; flex-wrap:wrap; margin-top:11px; }
+.insight-label { display:flex; align-items:center; gap:7px; margin:2px 0 8px; color:var(--teal); font:8px var(--mono); letter-spacing:.16em; }
+.insight-label::before { content:''; width:3px; height:14px; border-radius:2px; background:var(--teal); }
+.radar-dashboard-content { justify-content:flex-start; }
+.radar-dashboard { margin-top:2px; }
+.radar-dashboard .radar-center-label { font-size:18px; }
+.radar-dashboard .radar-axis-label { font:8px var(--mono); letter-spacing:.02em; fill:var(--t2); }
+.radar-dashboard .radar-axis-label.critical { fill:var(--maroon); }
+.radar-dashboard .radar-axis-label.warn { fill:var(--amber); }
+.radar-dashboard .radar-axis-label.healthy { fill:var(--green); }
+.radar-dashboard .radar-point { fill:var(--navy); stroke:white; stroke-width:1.5px; }
+.radar-dashboard .radar-point.critical { fill:var(--maroon); }
+.radar-dashboard .radar-point.warn { fill:var(--amber); }
+.radar-dashboard .radar-point.healthy { fill:var(--green); }
+.radar-legend-row { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--ln); min-height:24px; }
+.radar-legend-row:last-child { border-bottom:none; }
+.radar-legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; background:var(--navy); }
+.radar-legend-dot.critical { background:var(--maroon); }
+.radar-legend-dot.warn { background:var(--amber); }
+.radar-legend-dot.healthy { background:var(--green); }
+.radar-legend-dot.neutral { background:var(--teal); }
+.radar-legend-name { flex:1; color:var(--t2); font-size:11px; }
+.radar-legend-pct { font:10px var(--mono); color:var(--t1); }
+.radar-legend-pct.critical { color:var(--maroon); }
+.radar-legend-pct.warn { color:var(--amber); }
+.radar-legend-pct.healthy { color:var(--green); }
+.radar-dashboard-content { overflow:visible; }
+.dash5-mid > div:last-child .card { min-height:0; }
+.dash5-quote-bar { flex-shrink:0; position:relative; display:flex; align-items:center; gap:14px; padding:11px 22px; border-radius:var(--r); background:linear-gradient(135deg,#042d47 0%,#063d5c 60%,#0a4a70 100%); overflow:hidden; box-shadow:0 4px 18px rgba(4,45,71,.22), inset 0 1px 0 rgba(255,255,255,.06); }
+.dash5-quote-icon { color:rgba(10,124,140,.9); font-size:16px; flex-shrink:0; }
+.dash5-quote-body { flex:1; min-width:0; }
+.dash5-quote-text { color:rgba(255,255,255,.88); font-size:11.5px; font-style:italic; line-height:1.55; }
+.dash5-quote-attr { margin-top:3px; color:rgba(255,255,255,.38); font:8.5px var(--mono); letter-spacing:.08em; }
+.dash5-quote-rule { width:1px; height:32px; background:linear-gradient(to bottom,transparent,rgba(255,255,255,.14),transparent); flex-shrink:0; }
+.dash5-quote-badge { display:flex; align-items:center; gap:6px; padding:5px 13px; border:1px solid rgba(10,124,140,.35); border-radius:99px; color:rgba(255,255,255,.6); flex-shrink:0; font:9px var(--mono); letter-spacing:.1em; text-transform:uppercase; }
+.dash5-quote-badge-dot { width:6px; height:6px; border-radius:50%; background:#22c55e; box-shadow:0 0 6px rgba(34,197,94,.7); }
+
+@media (max-width: 1120px) {
+  .dash5-event-control { min-width:180px; }
+}
+
 .featured-event-select {
   min-height: 34px;
   border: 1px solid var(--ln2);
@@ -2725,56 +2814,4 @@ button.topic-chip:hover {
   .officer-stats-row { grid-template-columns: 1fr 1fr; }
   .officer-pin-card { padding: 28px 20px 24px; }
   .officer-dir-search { width: 100%; }
-}
-
-/* ── Dashboard Layout Scroll fixes & select menu styles ── */
-#v-dashboard {
-  height: auto !important;
-  min-height: auto !important;
-  overflow: visible !important;
-}
-
-.dash5-mid {
-  height: auto !important;
-  min-height: auto !important;
-  overflow: visible !important;
-}
-
-.dash5-mid .card,
-.card-ai-fused,
-.dash5-radar-card {
-  height: auto !important;
-  overflow: visible !important;
-  max-height: none !important;
-}
-
-.dash5-mid > div {
-  overflow: visible !important;
-  height: auto !important;
-}
-
-.dash5-event-select {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: white;
-  border-radius: var(--r-sm);
-  padding: 4px 10px;
-  font-size: 13px;
-  font-weight: 600;
-  outline: none;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: var(--font);
-  margin-left: 10px;
-}
-
-.dash5-event-select:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.dash5-event-select option {
-  background: #042d47;
-  color: white;
-  font-weight: 500;
 }

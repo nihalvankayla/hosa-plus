@@ -1,7 +1,7 @@
 import { supabase } from './supabaseClient.js'
 
 // Save user data (chat history, custom flashcards, planner tasks, selected event, situation report) to Supabase
-export async function saveUserDataToAccount(userId, chatHistory, customFlashcards, plannerTasks, selectedEvent, situationReport) {
+export async function saveUserDataToAccount(userId, chatHistory, customFlashcards, plannerTasks, selectedEvent, situationReport, activeEventId) {
   if (!userId) return
 
   // Retrieve current profile row first to make sure we don't overwrite other fields (like role)
@@ -29,6 +29,7 @@ export async function saveUserDataToAccount(userId, chatHistory, customFlashcard
     plannerTasks: plannerTasks !== undefined ? plannerTasks : currentNameData.plannerTasks || [],
     selectedEvent: selectedEvent !== undefined ? selectedEvent : currentNameData.selectedEvent || '',
     situationReport: situationReport !== undefined ? situationReport : currentNameData.situationReport || null,
+    activeEventId: activeEventId !== undefined ? activeEventId : currentNameData.activeEventId || null,
     lastActive: new Date().toISOString()
   }
 
@@ -55,6 +56,10 @@ export async function saveUserDataToAccount(userId, chatHistory, customFlashcard
     }
     if (situationReport !== undefined) {
       localStorage.setItem(`hosa-plus-situation-report:${userId}`, JSON.stringify(situationReport))
+    }
+    if (activeEventId !== undefined) {
+      localStorage.setItem(`hosa-plus-active-event-id:${userId}`, activeEventId)
+      localStorage.setItem('hosa-plus-active-event-id', activeEventId)
     }
   }
 
@@ -103,6 +108,10 @@ export async function loadUserDataFromAccount(userId) {
                 .upsert({ id: userId, name: JSON.stringify(cleaned) }, { onConflict: 'id' })
             } catch (e) {
               console.error('Failed to clean legacy sources from profile:', e)
+          }
+          if (parsed.activeEventId) {
+            localStorage.setItem(`hosa-plus-active-event-id:${userId}`, parsed.activeEventId)
+            localStorage.setItem('hosa-plus-active-event-id', parsed.activeEventId)
           }
         }
 

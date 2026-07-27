@@ -32,10 +32,30 @@ export async function loadStudyDeck(eventId) {
     }
   }
 
-  const normalizedCards = normalizeCards(customCards, eventId)
+  const moduleLoader = cardModules[eventId]
+  let baseDeck = getGeneratedStudyDeck(eventId)
+
+  if (moduleLoader) {
+    try {
+      const module = await moduleLoader()
+      baseDeck = {
+        // Some event modules are intentionally empty placeholders. Keep the
+        // generated event deck in that case so real topic metadata remains available.
+        flashcards: module.flashcards?.length ? [...(baseDeck?.flashcards || []), ...module.flashcards] : (baseDeck?.flashcards || []),
+        quizQuestions: module.quizQuestions?.length ? [...(baseDeck?.quizQuestions || []), ...module.quizQuestions] : (baseDeck?.quizQuestions || []),
+      }
+    } catch (error) {
+      console.warn(`Could not load deck for ${eventId}; using generated content.`, error)
+    }
+  }
+
+  const normalizedCards = normalizeCards(
+    [...(baseDeck?.flashcards || []), ...customCards],
+    eventId,
+  )
 
   // Generate quiz questions dynamically from these custom cards
-  const quizQuestions = normalizedCards.map((card) => {
+  const generatedQuestions = normalizedCards.map((card) => {
     const answer = card.definition
     
     // Distractors from other custom cards
@@ -67,7 +87,7 @@ export async function loadStudyDeck(eventId) {
 
   return {
     flashcards: normalizedCards,
-    quizQuestions,
+    quizQuestions: [...(baseDeck?.quizQuestions || []), ...generatedQuestions],
   }
 }
 
