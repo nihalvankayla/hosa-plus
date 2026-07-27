@@ -1789,6 +1789,18 @@ button.topic-chip:hover {
   line-height: 1.65;
 }
 
+/* Keep flipped-card content inside the card instead of spilling into the rating row. */
+.fc-deck-layout { align-items: start; }
+.fc-deck-main { min-width: 0; }
+.fc-card { overflow: hidden; }
+.fc-card:has(.fc-face-back) { min-height: 0; height: auto; }
+.fc-face-back { gap: 0; }
+.fc-face-back .card-learning-grid { margin-top: 14px; }
+.fc-face-back .fc-example { margin-top: 12px; }
+.fc-wrap { gap: 12px; }
+.fc-wrap > .fc-actions { margin-top: 0; }
+.fc-deck-aside { align-self: start; }
+
 .fc-wrap > .fc-actions {
   margin-top: 8px;
 }
