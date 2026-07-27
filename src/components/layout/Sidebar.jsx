@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 
 const sections = [
@@ -29,11 +28,8 @@ const sections = [
 ]
 
 function Sidebar() {
-  const location = useLocation()
   const { user, signOut } = useAuth()
-  const isMoreRoute = ['/planner', '/officers'].includes(location.pathname)
-  const [showMore, setShowMore] = useState(isMoreRoute)
-  const isMoreOpen = showMore || isMoreRoute
+  const isMoreOpen = true
   const displayName = user?.user_metadata?.full_name || user?.email || 'Student'
   const initials = displayName
     .split(/[\s@.]+/)
@@ -62,10 +58,10 @@ function Sidebar() {
 
       <div className="sb-section">
         <div className="sb-nav">
-          <button type="button" className="sb-more-toggle" onClick={() => setShowMore(!showMore)}>
+          <div className="sb-more-toggle" aria-expanded="true">
             <span className="sb-more-ico">{isMoreOpen ? '-' : '+'}</span>
             <span className="ni-lbl">More Tools</span>
-          </button>
+          </div>
         </div>
       </div>
 
