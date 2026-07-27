@@ -83,22 +83,48 @@ export async function loadUserDataFromAccount(userId) {
     if (data?.name) {
       const parsed = safeJsonParse(data.name)
       if (parsed) {
-        // Sync back to local storage cache for performance
-        if (typeof window !== 'undefined') {
-          if (parsed.chatHistory) {
-            localStorage.setItem(`hosa-plus-aihub-chat:${userId}`, JSON.stringify(parsed.chatHistory))
-          }
-          if (parsed.customFlashcards) {
-            Object.keys(parsed.customFlashcards).forEach(eventId => {
-              localStorage.setItem(`hosa-plus-custom-flashcards:${eventId}`, JSON.stringify(parsed.customFlashcards[eventId]))
-            })
-          }
-          if (parsed.plannerTasks) {
-            localStorage.setItem(`hosa-plus-planner:${userId}`, JSON.stringify(parsed.plannerTasks))
+          // If legacy or placeholder 'sources' exist in a user's profile, remove them so they won't appear in AI Hub.
+          // This will upsert a cleaned profile back to Supabase on next load for that user.
+          if (parsed.sources) {
+            try {
+              const cleaned = { ...parsed }
+              delete cleaned.sources
+              // persist cleaned profile back to Supabase (keep existing fields like chatHistory)
+              await supabase
+                .from('profiles')
+                .upsert({ id: userId, name: JSON.stringify(cleaned) }, { onConflict: 'id' })
+            } catch (e) {
+              console.error('Failed to clean legacy sources from profile:', e)
           }
         }
-        return parsed
-      }
+
+          // Sync back to local storage cache for performance
+          if (typeof window !== 'undefined') {
+            // Remove any localStorage keys that might contain stale 'sources' data
+            try {
+              Object.keys(localStorage).forEach((k) => {
+                if (/source(s)?/i.test(k)) {
+                  localStorage.removeItem(k)
+                }
+              })
+            } catch (e) {
+              // ignore storage access errors
+            }
+
+            if (parsed.chatHistory) {
+              localStorage.setItem(`hosa-plus-aihub-chat:${userId}`, JSON.stringify(parsed.chatHistory))
+            }
+            if (parsed.customFlashcards) {
+              Object.keys(parsed.customFlashcards).forEach(eventId => {
+                localStorage.setItem(`hosa-plus-custom-flashcards:${eventId}`, JSON.stringify(parsed.customFlashcards[eventId]))
+              })
+            }
+            if (parsed.plannerTasks) {
+              localStorage.setItem(`hosa-plus-planner:${userId}`, JSON.stringify(parsed.plannerTasks))
+            }
+          }
+          return parsed
+        }
     }
   } catch (err) {
     console.error('Failed to fetch user profile:', err)

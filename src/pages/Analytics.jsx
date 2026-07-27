@@ -21,6 +21,19 @@ function Analytics() {
 
   // Load chat history from cache instantly, then fetch from Supabase in the background
   useEffect(() => {
+    // Clean any localStorage keys that mention 'source' for all users (prevents stale placeholders)
+    if (typeof window !== 'undefined') {
+      try {
+        Object.keys(localStorage).forEach((k) => {
+          if (/source(s)?/i.test(k)) {
+            localStorage.removeItem(k)
+          }
+        })
+      } catch (e) {
+        // ignore
+      }
+    }
+
     if (user?.id) {
       // 1. Instant load from localStorage cache
       const saved = localStorage.getItem(`hosa-plus-aihub-chat:${user.id}`)
